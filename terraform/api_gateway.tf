@@ -50,7 +50,18 @@ resource "aws_api_gateway_deployment" "default" {
    ]
 
    rest_api_id = aws_api_gateway_rest_api.default.id
-   stage_name  = "test"
+}
+
+resource "aws_api_gateway_stage" "default" {
+  deployment_id = aws_api_gateway_deployment.default.id
+  rest_api_id = aws_api_gateway_rest_api.default.id
+  depends_on = [aws_cloudwatch_log_group.default]
+  stage_name = "test"
+}
+
+resource "aws_cloudwatch_log_group" "default" {
+  name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.default.id}/test"
+  retention_in_days = 7
 }
 
 output "base_url" {

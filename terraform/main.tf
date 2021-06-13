@@ -20,7 +20,7 @@ module "lambda_function" {
   
   lambda_role = aws_iam_role.lambda_exec.arn
 
-  source_path = "../src/main.js"
+  source_path = "../src"
 
   tags = {
     Name = "foundry-magic-l18n"

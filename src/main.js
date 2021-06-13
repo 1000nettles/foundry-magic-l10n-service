@@ -1,12 +1,8 @@
 'use strict'
 
+const localize = require('./localize');
+
 exports.handler = function (event, context, callback) {
-  var response = {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-    },
-    body: '<p>Hello world! I am the start of the FoundryVTT Magic L18n function.</p>',
-  }
+  const response = localize.getResponse();
   callback(null, response)
 }
