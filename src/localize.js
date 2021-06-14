@@ -1,6 +1,9 @@
+const fetch = require('node-fetch');
+const StreamZip = require('node-stream-zip');
+
 class Localize {
 
-  execute(event) {
+  async execute(event) {
     if (!event?.body) {
       return this.successResponse();
     }
@@ -15,17 +18,42 @@ class Localize {
       return this.successResponse();
     }
 
-    console.log(typeof body);
-    console.log(body);
-
     if (!body || !body?.manifest_url) {
       console.log('No manifest URL defined');
       return this.successResponse();
     }
 
-    console.log(body.manifest_url);
+    const manifest = await this.getManifestPayload(body.manifest_url);
+    await this.getDownload(manifest.download);
 
     return this.successResponse();
+  }
+
+  async getManifestPayload(manifestUrl) {
+    /*http.request(manifestUrl, { method: 'HEAD' }, (res) => {
+      console.log(res.statusCode);
+    }).on('error', (err) => {
+      console.error(err);
+    }).end();*/
+
+    let data;
+
+    const response = await fetch(
+      manifestUrl,
+      { method: 'GET', timeout: 5000, size: 8388608 }
+    );
+
+    if (!response.ok) {
+      throw new Error('Could not retrieve manifest payload');
+    }
+
+    return await response.json();
+  }
+
+  async getDownload(downloadUrl) {
+    const zip = new StreamZip.async({ file: downloadUrl });
+    const data = await zip.entryData('src/lang/en.json');
+    console.log(data);
   }
 
   successResponse() {
