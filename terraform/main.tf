@@ -20,10 +20,21 @@ module "lambda_function" {
   
   lambda_role = aws_iam_role.lambda_exec.arn
 
-  source_path = "../src"
+  source_path = "../app"
 
   tags = {
     Name = "foundry-magic-l18n"
+  }
+}
+
+data "aws_iam_policy_document" "instance_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
   }
 }
 
@@ -31,20 +42,7 @@ module "lambda_function" {
  # may access.
 resource "aws_iam_role" "lambda_exec" {
    name = "foundry-magic-l18n-lambda"
-
-    assume_role_policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action = "sts:AssumeRole",
-          Effect = "Allow"
-          Sid    = ""
-          Principal = {
-            Service: "lambda.amazonaws.com"
-          }
-        },
-      ]
-    })
+   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json 
 }
 
 resource "aws_lambda_permission" "apigw" {
