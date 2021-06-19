@@ -1,11 +1,16 @@
-const ModuleRetriever = require('./ModuleRetriever');
+'use strict';
 
-class Localize {
+const PackageRetriever = require('./PackageRetriever');
+
+/**
+ * A class to handle the orchestration of our localization.
+ */
+module.exports = class Localize {
 
   async execute(event) {
     if (!event?.body) {
       console.log('No body defined');
-      return this.successResponse();
+      return this._successResponse();
     }
 
     let body;
@@ -15,21 +20,21 @@ class Localize {
     } catch (e) {
       console.log('Could not parse');
       console.log(e);
-      return this.successResponse();
+      return this._successResponse();
     }
 
     if (!body || !body?.manifest_url) {
       console.log('No manifest URL defined');
-      return this.successResponse();
+      return this._successResponse();
     }
 
-    const moduleRetriever = new ModuleRetriever();
-    await moduleRetriever.retrieve(body.manifest_url);
+    const packageRetriever = new PackageRetriever();
+    await packageRetriever.retrieve(body.manifest_url);
 
-    return this.successResponse();
+    return this._successResponse();
   }
 
-  successResponse() {
+  _successResponse() {
     return {
       statusCode: 200,
       headers: {
@@ -40,5 +45,3 @@ class Localize {
   }
 
 }
-
-module.exports = Localize;
