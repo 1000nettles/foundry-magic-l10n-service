@@ -17,8 +17,9 @@ module "lambda_function" {
   description   = "A Lambda function to generate localizations for Foundry systems and modules"
   handler       = "main.handler"
   runtime       = "nodejs14.x"
-  
-  lambda_role = aws_iam_role.lambda_exec.arn
+
+  attach_policy = true
+  policy = aws_iam_policy.s3_access.arn
 
   source_path = "../app"
 
@@ -27,8 +28,36 @@ module "lambda_function" {
   }
 }
 
+ # IAM role which dictates what other AWS services the Lambda function
+ # may access.
+resource "aws_iam_role" "lambda_exec" {
+   name = "foundry-magic-l18n-lambda-exec"
+   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json 
+}
+
+resource "aws_iam_policy" "s3_access" {
+  name        = "s3_access_policy"
+  description = "My test policy"
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 data "aws_iam_policy_document" "instance_assume_role_policy" {
   statement {
+    sid = "AssumeRole"
     actions = ["sts:AssumeRole"]
 
     principals {
@@ -38,12 +67,6 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
   }
 }
 
- # IAM role which dictates what other AWS services the Lambda function
- # may access.
-resource "aws_iam_role" "lambda_exec" {
-   name = "foundry-magic-l18n-lambda"
-   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json 
-}
 
 resource "aws_lambda_permission" "apigw" {
    statement_id  = "AllowAPIGatewayInvoke"
