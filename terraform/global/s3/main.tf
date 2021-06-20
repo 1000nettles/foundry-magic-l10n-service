@@ -2,8 +2,8 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_s3_bucket" "orig_modules" {
-  bucket = "1000nettles-foundry-magic-l18n-orig-modules"
+resource "aws_s3_bucket" "instance" {
+  bucket = var.bucket_name
 
   # Prevent accidental deletion
   lifecycle {
@@ -14,4 +14,10 @@ resource "aws_s3_bucket" "orig_modules" {
     enabled = true
   }
 
+}
+
+resource "aws_s3_bucket_object" "packages_orig_dir" {
+    bucket = var.bucket_name
+    key    = "packages_orig/"
+    source = "/dev/null"
 }

@@ -11,7 +11,9 @@ const crypto = require("crypto");
  module.exports = class PackageRetriever {
 
   constructor() {
-    this.moduleFilename = crypto.randomBytes(20).toString('hex') + '.zip';
+    this.packageFilename = crypto.randomBytes(20).toString('hex') + '.zip';
+    this.bucketName = 'foundry-magic-l18n';
+    this.packageDir = 'packages_orig';
   }
 
   /**
@@ -64,8 +66,8 @@ const crypto = require("crypto");
     );
 
     const { s3WriteStream, uploadPromise } = this._uploadStream({
-      Bucket: '1000nettles-foundry-magic-l18n-orig-modules',
-      Key: this.moduleFilename,
+      Bucket: this.bucketName,
+      Key: `${this.packageDir}/${this.packageFilename}`,
     });
 
     await response.body.pipe(s3WriteStream);
