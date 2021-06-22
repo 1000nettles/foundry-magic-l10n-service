@@ -1,6 +1,6 @@
 'use strict';
 
-const Localize = require('./Localize');
+const Localize = require('./src/Localize');
 
 exports.handler = function (event, context, callback) {
   const localize = new Localize();
