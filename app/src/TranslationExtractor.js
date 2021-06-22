@@ -39,7 +39,7 @@ module.exports = class TranslationExtractor {
 
           translations.push({
             lang: language.lang,
-            content: content.toString('utf-8')
+            content: JSON.parse(content.toString('utf-8')),
           });
 
           entry.autodrain();

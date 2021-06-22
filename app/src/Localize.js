@@ -3,11 +3,22 @@
 const PackageRetriever = require('./PackageRetriever');
 const TranslationExtractor = require('./TranslationExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
+const Translator = require('./Translator');
 
 /**
  * A class to handle the orchestration of our localization.
  */
 module.exports = class Localize {
+
+  constructor() {
+    /**
+     * The target locales that we should be generating translations for.
+     */
+    this.targetLocales = [
+      'en',
+      'fr',
+    ];
+  }
 
   async execute(event) {
     if (!event?.body) {
@@ -48,6 +59,26 @@ module.exports = class Localize {
       .extract(packageFile, manifest.languages);
 
     console.log(translations);
+
+    // 5. Compare translations to the target translations we want.
+    const toTranslate = this.targetLocales.filter(target => {
+      for (const translation of translations) {
+        if (target === translation.lang) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    console.log(toTranslate);
+
+    if (!toTranslate.length) {
+      return this._successResponse();
+    }
+
+    const translator = new Translator();
+    await translator.translate(translations, toTranslate);
 
     return this._successResponse();
   }
