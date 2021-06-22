@@ -11,9 +11,8 @@ const crypto = require("crypto");
  module.exports = class PackageRetriever {
 
   constructor() {
-    this.packageFilename = crypto.randomBytes(20).toString('hex') + '.zip';
+    this.packageFile = 'packages_orig' + crypto.randomBytes(20).toString('hex') + '.zip';
     this.bucketName = 'foundry-magic-l18n';
-    this.packageDir = 'packages_orig';
   }
 
   /**
@@ -22,32 +21,9 @@ const crypto = require("crypto");
    * @param {string} manifestUrl
    *   The URL to the FoundryVTT module / system manifest file.
    */
-  async retrieve(manifestUrl) {
-    const manifest = await this._getManifest(manifestUrl);
-    await this._downloadAndSave(manifest.download);
-  }
-
-  /**
-   * Get the manifest.
-   * 
-   * @param {string} manifestUrl
-   *   The URL to the FoundryVTT module / system manifest file.
-   * 
-   * @returns {JSON}
-   *   The manifest file in JSON format.
-   */
-  async _getManifest(manifestUrl) {
-    const response = await fetch(
-      manifestUrl,
-      { method: 'GET', timeout: 5000, size: 8388608 }
-    );
-
-    if (!response.ok) {
-      throw new Error('Could not retrieve manifest payload');
-    }
-
-    const responseText = await response.text();
-    return JSON.parse(responseText);
+  async retrieve(downloadUrl) {
+    await this._downloadAndSave(downloadUrl);
+    return this.packageFile;
   }
 
   /**
@@ -67,7 +43,7 @@ const crypto = require("crypto");
 
     const { s3WriteStream, uploadPromise } = this._uploadStream({
       Bucket: this.bucketName,
-      Key: `${this.packageDir}/${this.packageFilename}`,
+      Key: this.packageFile,
     });
 
     await response.body.pipe(s3WriteStream);
@@ -81,7 +57,7 @@ const crypto = require("crypto");
    * Solution found here: https://stackoverflow.com/a/50291380/823549
    */
   _uploadStream({ Bucket, Key }) {
-    const s3 = new AWS.S3();
+    const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
     const s3WriteStream = new stream.PassThrough();
     const uploadPromise = s3.upload({
       Bucket,

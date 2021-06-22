@@ -1,6 +1,8 @@
 'use strict';
 
 const PackageRetriever = require('./PackageRetriever');
+const TranslationExtractor = require('./TranslationExtractor');
+const ManifestRetriever = require('./ManifestRetriever');
 
 /**
  * A class to handle the orchestration of our localization.
@@ -15,6 +17,7 @@ module.exports = class Localize {
 
     let body;
 
+    // 1. Get and validate the body of the request. Determine the manifest URL.
     try {
       body = JSON.parse(event.body);
     } catch (e) {
@@ -28,8 +31,23 @@ module.exports = class Localize {
       return this._successResponse();
     }
 
+    // 2. Get the full manifest JSON.
+    const manifestRetriever = new ManifestRetriever();
+    const manifest = await manifestRetriever.retrieve(body.manifest_url);
+
+    // TODO: ensure manifest has valid "languages" section.
+
+    // 3. Get and store the package zip.
     const packageRetriever = new PackageRetriever();
-    await packageRetriever.retrieve(body.manifest_url);
+    const packageFile = await packageRetriever.retrieve(manifest.download);
+
+    // 4. Extract the translations from the package, depending on which ones
+    //    are listed in the manifest.
+    const translationExtractor = new TranslationExtractor();
+    const translations = await translationExtractor
+      .extract(packageFile, manifest.languages);
+
+    console.log(translations);
 
     return this._successResponse();
   }
