@@ -1,4 +1,7 @@
 {
+  "name": "foundry-magic-l18n",
+  "private": true,
+  "version": "0.1.0",
   "dependencies": {
     "aws-sdk": "^2.932.0",
     "node-fetch": "^2.6.1",
