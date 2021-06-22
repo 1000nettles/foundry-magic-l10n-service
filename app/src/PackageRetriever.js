@@ -11,7 +11,7 @@ const crypto = require("crypto");
  module.exports = class PackageRetriever {
 
   constructor() {
-    this.packageFile = 'packages_orig' + crypto.randomBytes(20).toString('hex') + '.zip';
+    this.packageFile = 'packages_orig/' + crypto.randomBytes(20).toString('hex') + '.zip';
     this.bucketName = 'foundry-magic-l18n';
   }
 
