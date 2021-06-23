@@ -3,7 +3,7 @@
 const fetch = require('node-fetch');
 
 /**
- * A class to retrieve the FoundryVTT package manifest file.
+ * A class to retrievePackage the FoundryVTT package manifest file.
  */
 module.exports = class ManifestRetriever {
   /**

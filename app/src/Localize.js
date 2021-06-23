@@ -1,6 +1,6 @@
 'use strict';
 
-const PackageRetriever = require('./PackageRetriever');
+const S3Coordinator = require('./S3Coordinator');
 const TranslationExtractor = require('./TranslationExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
 const ManifestValidator = require('./ManifestValidator');
@@ -22,6 +22,8 @@ module.exports = class Localize {
     let body;
     let manifest;
     let translations;
+    let finalTranslations;
+    let packageName;
 
     // 1. Get and validate the body of the request. Determine the manifest URL.
     try {
@@ -54,9 +56,11 @@ module.exports = class Localize {
       return this._failureResponse(e.message);
     }
 
+    packageName = manifest.name;
+
     // 4. Get and store the package zip.
-    const packageRetriever = new PackageRetriever();
-    const packageFile = await packageRetriever.retrieve(manifest.download);
+    const s3Coordinator = new S3Coordinator(packageName);
+    const packageFile = await s3Coordinator.retrievePackage(manifest.download);
 
     // 5. Extract the translations from the package, depending on which ones
     //    are listed in the manifest.
@@ -92,10 +96,16 @@ module.exports = class Localize {
     const translator = new Translator();
 
     try {
-      await translator.translate(translations, toTranslate);
+      finalTranslations = await translator.translate(
+        translations,
+        toTranslate
+      );
     } catch (e) {
       console.error(`Could not translate via AWS Translate: ${e.message}`);
     }
+
+    // 8. Upload the new translation files.
+    await s3Coordinator.saveTranslationFiles(finalTranslations);
 
     return this._successResponse();
   }

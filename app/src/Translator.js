@@ -26,7 +26,7 @@ module.exports = class Translator {
    */
   async translate(translations, toTranslate) {
     const baseTranslation = this._getBaseTranslation(translations);
-    let finalTranslations = [];
+    let finalTranslations = {};
 
     for (const language of toTranslate) {
       for (const entry of Object.entries(baseTranslation.content)) {
