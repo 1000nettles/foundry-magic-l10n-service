@@ -8,10 +8,10 @@ const fetch = require('node-fetch');
 module.exports = class ManifestRetriever {
   /**
    * Get the manifest.
-   * 
+   *
    * @param {string} manifestUrl
    *   The URL to the FoundryVTT module / system manifest file.
-   * 
+   *
    * @returns {JSON}
    *   The manifest file in JSON format.
    */
@@ -19,13 +19,20 @@ module.exports = class ManifestRetriever {
     const response = await fetch(
       manifestUrl,
       { method: 'GET', timeout: 5000, size: 8388608 }
-    );
+    ).catch(err => {
+      throw new Error(`Could not retrieve manifest from "${manifestUrl}" - ${err.message}`)
+    });
 
     if (!response.ok) {
-      throw new Error('Could not retrieve manifest payload');
+      throw new Error(`Could not retrieve manifest from "${manifestUrl}"`);
     }
 
     const responseText = await response.text();
-    return JSON.parse(responseText);
+
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Provided manifest is not valid JSON: ${e.message}`);
+    }
   }
 }

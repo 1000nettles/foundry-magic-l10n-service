@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const Constants = require('./Constants');
 
 /**
  * A class to execute the actual translation of strings.
@@ -58,14 +59,13 @@ module.exports = class Translator {
    * @private
    */
   _getBaseTranslation(translations) {
-    const baseLangCode = 'en';
     const base = translations.find(
-      translation => translation.lang === baseLangCode
+      translation => translation.lang === Constants.BASE_LANGUAGE_CODE
     );
 
     if (!base) {
       throw new Error(
-        `Base language code ${baseLangCode} could not be found in the translations list`
+        `Base language code ${Constants.BASE_LANGUAGE_CODE} could not be found in the translations list`
       );
     }
 
