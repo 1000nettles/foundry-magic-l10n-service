@@ -18,8 +18,12 @@ module "lambda_function" {
   handler       = "main.handler"
   runtime       = "nodejs14.x"
 
-  attach_policy = true
-  policy = aws_iam_policy.s3_access.arn
+  attach_policies = true
+  number_of_policies = 2
+  policies = [
+    aws_iam_policy.s3_access.arn,
+    aws_iam_policy.translate_access.arn
+  ]
 
   source_path = "../app"
 
@@ -32,12 +36,12 @@ module "lambda_function" {
  # may access.
 resource "aws_iam_role" "lambda_exec" {
    name = "foundry-magic-l18n-lambda-exec"
-   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json 
+   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
 }
 
 resource "aws_iam_policy" "s3_access" {
   name        = "s3_access_policy"
-  description = "My test policy"
+  description = "Access all of the dedicated S3 instance"
 
   # Terraform's "jsonencode" function converts a
   # Terraform expression result to valid JSON syntax.
@@ -47,6 +51,29 @@ resource "aws_iam_policy" "s3_access" {
       {
         Action = [
           "s3:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "translate_access" {
+  name        = "translate_access_policy"
+  description = "Access all functionality of AWS Translate"
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "translate:*",
+          "comprehend:DetectDominantLanguage",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics"
         ]
         Effect   = "Allow"
         Resource = "*"
