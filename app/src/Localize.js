@@ -104,8 +104,11 @@ module.exports = class Localize {
       console.error(`Could not translate via AWS Translate: ${e.message}`);
     }
 
-    // 8. Upload the new translation files.
-    await s3Coordinator.saveTranslationFiles(finalTranslations);
+    // 8. Save the new translation files to S3.
+    const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);
+
+    // 9. Create a new zip file with the translated files for download.
+    await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
 
     return this._successResponse();
   }

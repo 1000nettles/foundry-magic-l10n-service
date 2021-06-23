@@ -3,7 +3,6 @@ const Constants = require('./Constants');
 module.exports = class ManifestValidator {
 
   validate(manifest) {
-    console.log(manifest);
     if (!manifest?.languages || !manifest.languages.length) {
       throw new Error('Provided manifest must specify at least one language');
     }

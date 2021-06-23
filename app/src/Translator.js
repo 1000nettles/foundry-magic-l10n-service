@@ -95,8 +95,6 @@ module.exports = class Translator {
       Text: text
     };
 
-    console.log(`About to translate ${text}`);
-
     await this.awsTranslate.translateText(params, (err, data) => {
       if (err) {
         throw new Error(

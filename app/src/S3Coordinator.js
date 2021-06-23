@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const fetch = require('node-fetch');
 const stream = require('stream');
 const crypto = require('crypto');
+const s3Zip = require('s3-zip');
 
 /**
  * A class to coordinate uploads and downloads to AWS S3.
@@ -14,9 +15,11 @@ const crypto = require('crypto');
   constructor(packageName) {
     this.packageId = `${packageName}-${crypto.randomBytes(8).toString('hex')}`;
     this.packageFile = `packages_orig/${this.packageId}.zip`;
+    this.finalPackageFile = `processed/${this.packageId}.zip`;
     this.processedDir = 'processed';
     this.bucketName = 'foundry-magic-l18n';
-    this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+    this.region = 'us-east-1';
+    this.s3 = new AWS.S3({ region: this.region, apiVersion: '2006-03-01' });
   }
 
   /**
@@ -36,11 +39,12 @@ const crypto = require('crypto');
     * @param {object} translations
     *   The translations, broken down by language code.
     *
-    * @return {Promise<void>}
-    *   Return a promise that once complete, specifies that the uploading is
-    *   finished.
+    * @return {Promise<object>}
+    *   Return a promise that once complete, specifies the files uploaded and
+    *   the directory they're stored in.
     */
   async saveTranslationFiles(translations) {
+    let files = [];
     for (const entity of Object.entries(translations)) {
       const [language, translated] = entity;
       const buffer = Buffer.from(JSON.stringify(translated));
@@ -52,12 +56,25 @@ const crypto = require('crypto');
         ContentType: 'application/json',
       };
 
-      await this.s3.upload(params, function (err, data) {
-        if (err) {
-          throw err;
-        }
-      });
+      await this.s3.upload(params).promise();
+      files.push(`${language}.json`);
     }
+
+    return {
+      directory: `${this.processedDir}/${this.packageId}`,
+      files,
+    };
+  }
+
+  async createZipFromTranslatedFiles(fileBundle) {
+    const { s3WriteStream, uploadPromise } = this._uploadStream({
+      Bucket: this.bucketName,
+      Key: this.finalPackageFile,
+    });
+
+    await s3Zip
+      .archive({ region: this.region, bucket: this.bucketName}, fileBundle.directory, fileBundle.files)
+      .pipe(s3WriteStream);
   }
 
   /**
