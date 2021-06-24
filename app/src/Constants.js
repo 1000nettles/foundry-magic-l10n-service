@@ -16,7 +16,7 @@ module.exports = class Constants {
   static get TARGET_LANGUAGES() {
     return [
       'en',
-      'fr',
+      'ar',
     ];
   }
 }
