@@ -1,5 +1,6 @@
 'use strict';
 
+const DDBCoordinator = require('./DDBCoordinator');
 const S3Coordinator = require('./S3Coordinator');
 const TranslationExtractor = require('./TranslationExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
@@ -10,7 +11,7 @@ const Constants = require('./Constants');
 /**
  * A class to handle the orchestration of our localization.
  */
-module.exports = class Localize {
+module.exports = class App {
 
   async execute(event) {
     if (!event?.body) {
@@ -22,8 +23,10 @@ module.exports = class Localize {
     let body;
     let manifest;
     let translations;
+    let translateResult;
     let finalTranslations;
     let packageName;
+    let ddbRecords;
 
     // 1. Get and validate the body of the request. Determine the manifest URL.
     try {
@@ -96,13 +99,21 @@ module.exports = class Localize {
     const translator = new Translator();
 
     try {
-      finalTranslations = await translator.translate(
+       translateResult = await translator.translate(
         translations,
         toTranslate
       );
     } catch (e) {
-      console.error(`Could not translate via AWS Translate: ${e.message}`);
+      return this._failureResponse(
+        `Could not translate via AWS Translate: ${e.message}`
+      );
     }
+
+    finalTranslations = translateResult.finalTranslations;
+    ddbRecords = translateResult.ddbRecords;
+
+    const ddbCoordinator = new DDBCoordinator();
+    await ddbCoordinator.save(ddbRecords);
 
     // 8. Save the new translation files to S3.
     const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);

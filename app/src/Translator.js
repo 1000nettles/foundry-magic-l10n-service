@@ -27,14 +27,30 @@ module.exports = class Translator {
   async translate(translations, toTranslate) {
     const baseTranslation = this._getBaseTranslation(translations);
     let finalTranslations = {};
+    let ddbRecords = [];
 
-    for (const language of toTranslate) {
+    for (const target of toTranslate) {
       for (const entry of Object.entries(baseTranslation.content)) {
-        finalTranslations[language] = finalTranslations[language] || {};
+        finalTranslations[target] = finalTranslations[target] || {};
         const [stringId, text] = entry;
-        finalTranslations[language][stringId] = await this._getAWSTranslation(
+
+        const translated = await this._getAWSTranslation(
           baseTranslation.lang,
-          language,
+          target,
+          text
+        );
+
+        // TODO: move this composition somewhere else.
+        ddbRecords.push({
+          Source: Constants.BASE_LANGUAGE_CODE,
+          SourceText: text,
+          Target: target,
+          TargetText: translated,
+        });
+
+        finalTranslations[target][stringId] = await this._getAWSTranslation(
+          baseTranslation.lang,
+          target,
           text
         );
 
@@ -43,8 +59,9 @@ module.exports = class Translator {
     }
 
     console.log(finalTranslations);
+    console.log(ddbRecords);
 
-    return finalTranslations;
+    return { finalTranslations, ddbRecords };
   }
 
   /**

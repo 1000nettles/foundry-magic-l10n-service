@@ -1,6 +1,6 @@
 'use strict';
 
-const Localize = require('./src/Localize');
+const Localize = require('./src/App');
 
 /**
  * The main Lambda entry point.
