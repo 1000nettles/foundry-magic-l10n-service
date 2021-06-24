@@ -17,12 +17,14 @@ module "lambda_function" {
   description   = "A Lambda function to generate localizations for Foundry systems and modules"
   handler       = "main.handler"
   runtime       = "nodejs14.x"
+  timeout       = 60
 
   attach_policies = true
-  number_of_policies = 2
+  number_of_policies = 3
   policies = [
     aws_iam_policy.s3_access.arn,
-    aws_iam_policy.translate_access.arn
+    aws_iam_policy.translate_access.arn,
+    aws_iam_policy.ddb_access.arn,
   ]
 
   source_path = "../app"
@@ -54,6 +56,27 @@ resource "aws_iam_policy" "s3_access" {
         ]
         Effect   = "Allow"
         Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "ddb_access" {
+  name        = "ddb_access_policy"
+  description = "Access the Translations table within DynamoDB"
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid: "DDBTranslationsTableFullAccess"
+        Action = [
+          "dynamodb:*",
+        ]
+        Effect   = "Allow"
+        Resource = aws_dynamodb_table.translations.arn
       }
     ]
   })

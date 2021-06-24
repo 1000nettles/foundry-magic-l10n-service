@@ -113,7 +113,14 @@ module.exports = class App {
     ddbRecords = translateResult.ddbRecords;
 
     const ddbCoordinator = new DDBCoordinator();
-    await ddbCoordinator.save(ddbRecords);
+
+    try {
+      await ddbCoordinator.save(ddbRecords);
+    } catch (e) {
+      return this._failureResponse(
+        `Could not save data into Translations: ${e.message}`
+      );
+    }
 
     // 8. Save the new translation files to S3.
     const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);

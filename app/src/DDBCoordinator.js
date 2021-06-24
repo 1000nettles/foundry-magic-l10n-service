@@ -13,18 +13,14 @@ module.exports = class DDBCoordinator {
     this.tableName = 'Translations';
   }
 
-  async save(data) {
-    for (const datum of data) {
+  async save(ddbItems) {
+    for (const Item of ddbItems) {
       const params = {
         TableName: this.tableName,
-        Item: datum,
+        Item,
       };
 
-      console.log('about to put document');
-      console.log(params);
-
-      const result = await this.docClient.put(params).promise();
-      console.log(result);
+      await this.docClient.put(params).promise();
     }
   }
 }
