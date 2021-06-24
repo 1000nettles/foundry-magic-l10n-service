@@ -28,6 +28,8 @@ module.exports = class App {
     let packageName;
     let ddbRecords;
 
+    const ddbCoordinator = new DDBCoordinator();
+
     // 1. Get and validate the body of the request. Determine the manifest URL.
     try {
       body = JSON.parse(event.body);
@@ -96,7 +98,7 @@ module.exports = class App {
     }
 
     // 7. Actually translate to the strings to the desired languages.
-    const translator = new Translator();
+    const translator = new Translator(ddbCoordinator);
 
     try {
        translateResult = await translator.translate(
@@ -112,20 +114,22 @@ module.exports = class App {
     finalTranslations = translateResult.finalTranslations;
     ddbRecords = translateResult.ddbRecords;
 
-    const ddbCoordinator = new DDBCoordinator();
-
-    try {
-      await ddbCoordinator.save(ddbRecords);
-    } catch (e) {
-      return this._failureResponse(
-        `Could not save data into Translations: ${e.message}`
-      );
+    // 8. It's a valid case that we may not have any records to actually save
+    // afterwards. This means that all translations are currently in DynamoDB.
+    if (ddbRecords.length) {
+      try {
+        await ddbCoordinator.save(ddbRecords);
+      } catch (e) {
+        return this._failureResponse(
+          `Could not save data into Translations: ${e.message}`
+        );
+      }
     }
 
-    // 8. Save the new translation files to S3.
+    // 9. Save the new translation files to S3.
     const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);
 
-    // 9. Create a new zip file with the translated files for download.
+    // 10. Create a new zip file with the translated files for download.
     await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
 
     return this._successResponse();

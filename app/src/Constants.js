@@ -16,7 +16,16 @@ module.exports = class Constants {
   static get TARGET_LANGUAGES() {
     return [
       'en',
-      'ar',
+      'ca',
     ];
+  }
+
+  /**
+   * The table name of the Translations table.
+   *
+   * @return {string}
+   */
+  static get TRANSLATIONS_TABLE_NAME() {
+    return 'Translations';
   }
 }

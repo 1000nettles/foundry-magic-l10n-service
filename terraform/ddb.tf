@@ -14,6 +14,10 @@ resource "aws_dynamodb_table" "translations" {
     type = "S"
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = {
     Name = "ddb-translations"
     Environment = "staging"

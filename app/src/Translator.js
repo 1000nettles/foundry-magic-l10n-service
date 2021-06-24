@@ -8,9 +8,16 @@ const Constants = require('./Constants');
  */
 module.exports = class Translator {
 
-  constructor() {
+  /**
+   * Translator constructor.
+   *
+   * @param {DDBCoordinator} ddbCoordinator
+   *   The injected DDBCoordinator instance.
+   */
+  constructor(ddbCoordinator) {
     AWS.config.update({ region: 'us-east-1' });
     this.awsTranslate = new AWS.Translate();
+    this.ddbCoordinator = ddbCoordinator;
   }
 
   /**
@@ -31,35 +38,36 @@ module.exports = class Translator {
 
     for (const target of toTranslate) {
       for (const entry of Object.entries(baseTranslation.content)) {
+        let translated;
         finalTranslations[target] = finalTranslations[target] || {};
         const [stringId, text] = entry;
 
-        const translated = await this._getAWSTranslation(
-          baseTranslation.lang,
-          target,
-          text
-        );
+        // Check first if we have the translation already stored.
+        const storedTranslation = await this.ddbCoordinator.get(target, text);
+        const hasStoredTranslation = Object.keys(storedTranslation).length > 0;
 
-        // TODO: move this composition somewhere else.
-        ddbRecords.push({
-          Source: Constants.BASE_LANGUAGE_CODE,
-          SourceText: text,
-          Target: target,
-          TargetText: translated,
-        });
+        if (!hasStoredTranslation) {
+          translated = await this._getAWSTranslation(
+            baseTranslation.lang,
+            target,
+            text
+          );
 
-        finalTranslations[target][stringId] = await this._getAWSTranslation(
-          baseTranslation.lang,
-          target,
-          text
-        );
+          ddbRecords.push({
+            Source: Constants.BASE_LANGUAGE_CODE,
+            SourceText: text,
+            Target: target,
+            TargetText: translated,
+          });
+        } else {
+          translated = storedTranslation;
+        }
+
+        finalTranslations[target][stringId] = translated;
 
         break;
       }
     }
-
-    console.log(finalTranslations);
-    console.log(ddbRecords);
 
     return { finalTranslations, ddbRecords };
   }

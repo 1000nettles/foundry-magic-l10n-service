@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const Constants = require('./Constants');
 
 module.exports = class DDBCoordinator {
 
@@ -10,7 +11,31 @@ module.exports = class DDBCoordinator {
     });
 
     this.docClient = new AWS.DynamoDB.DocumentClient();
-    this.tableName = 'Translations';
+  }
+
+  /**
+   * Get the translation from a target language code and the text.
+   *
+   * Both params are necessary!
+   *
+   * @param {string} target
+   *   The target language code to query for.
+   * @param {string} text
+   *   The original, untranslated text to query for.
+   *
+   * @return {Promise<object>}
+   *   A promise containing the record. Empty object if cannot be found.
+   */
+  async get(target, text) {
+    const params = {
+      Key: {
+        Target: target,
+        SourceText: text,
+      },
+      TableName: Constants.TRANSLATIONS_TABLE_NAME,
+    };
+
+    return await this.docClient.get(params).promise();
   }
 
   /**
@@ -31,18 +56,17 @@ module.exports = class DDBCoordinator {
         RequestItems: {}
       };
 
-      params.RequestItems[this.tableName] = [];
+      params.RequestItems[Constants.TRANSLATIONS_TABLE_NAME] = [];
 
       for (const Item of ddbItemsChunk) {
-        params.RequestItems[this.tableName].push({
+        params.RequestItems[Constants.TRANSLATIONS_TABLE_NAME].push({
           PutRequest: {
             Item,
           },
         });
       }
 
-      const result = await this.docClient.batchWrite(params).promise();
-      console.log(result);
+      await this.docClient.batchWrite(params).promise();
     }
   }
 
