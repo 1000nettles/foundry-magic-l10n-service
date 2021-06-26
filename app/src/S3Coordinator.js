@@ -44,11 +44,11 @@ const s3Zip = require('s3-zip');
     *   Return a promise that once complete, specifies the files uploaded and
     *   the directory they're stored in.
     */
-  async saveTranslationFiles(translations) {
+  async saveTranslationFiles(translations, newLanguages) {
     let files = [];
     for (const entity of Object.entries(translations)) {
       const [language, translated] = entity;
-      const buffer = Buffer.from(JSON.stringify(translated));
+      const buffer = Buffer.from(JSON.stringify(translated, null, 2));
       const params = {
         Bucket: this.bucketName,
         Key: `${this.downloadsDir}/${this.packageId}/${language}.json`,
@@ -60,6 +60,19 @@ const s3Zip = require('s3-zip');
       await this.s3.upload(params).promise();
       files.push(`${language}.json`);
     }
+
+    // Upload new languages file.
+     const buffer = Buffer.from(JSON.stringify(newLanguages, null, 2));
+     const params = {
+       Bucket: this.bucketName,
+       Key: `${this.downloadsDir}/${this.packageId}/languages.json`,
+       Body: buffer,
+       ContentEncoding: 'base64',
+       ContentType: 'application/json',
+     };
+
+     await this.s3.upload(params).promise();
+     files.push(`languages.json`);
 
     // Upload the files which are included in every compiled package.
      const extraFiles = [

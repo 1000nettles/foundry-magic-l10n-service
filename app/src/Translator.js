@@ -28,8 +28,8 @@ module.exports = class Translator {
    * @param {array} toTranslate
    *   A list of language codes to translate too.
    *
-   * @return {Promise<*[]>}
-   *   A promise containing the final translations.
+   * @return {Promise<{finalTranslations: {}, ddbRecords: *[]}>}
+   *   A promise containing the final translations and DynamoDB records.
    */
   async translate(translations, toTranslate) {
     const baseTranslation = this._getBaseTranslation(translations);
@@ -43,28 +43,31 @@ module.exports = class Translator {
         const [stringId, text] = entry;
 
         // Check first if we have the translation already stored.
+        // If we have it stored, just return it.
         const storedTranslation = await this.ddbCoordinator.get(target, text);
-        const hasStoredTranslation = Object.keys(storedTranslation).length > 0;
+        if (Object.keys(storedTranslation).length > 0) {
+          finalTranslations[target][stringId] = storedTranslation.Item.TargetText;
 
-        if (!hasStoredTranslation) {
-          translated = await this._getAWSTranslation(
-            baseTranslation.lang,
-            target,
-            text
-          );
-
-          ddbRecords.push({
-            Source: Constants.BASE_LANGUAGE_CODE,
-            SourceText: text,
-            Target: target,
-            TargetText: translated,
-          });
-        } else {
-          translated = storedTranslation;
+          // This `break` is for testing purposes so we don't run out of
+          // AWS Translate bandwidth.
+          break;
         }
 
-        finalTranslations[target][stringId] = translated;
+        translated = await this._getAWSTranslation(
+          baseTranslation.lang,
+          target,
+          text
+        );
 
+        ddbRecords.push({
+          Source: Constants.BASE_LANGUAGE_CODE,
+          SourceText: text,
+          Target: target,
+          TargetText: translated,
+        });
+
+        // This `break` is for testing purposes so we don't run out of
+        // AWS Translate bandwidth.
         break;
       }
     }

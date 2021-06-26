@@ -7,6 +7,7 @@ const ManifestRetriever = require('./ManifestRetriever');
 const ManifestValidator = require('./ManifestValidator');
 const Translator = require('./Translator');
 const Constants = require('./Constants');
+const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 
 /**
  * A class to handle the orchestration of our localization.
@@ -81,7 +82,7 @@ module.exports = class App {
     }
 
     // 6. Compare translations to the target translations we want.
-    const toTranslate = Constants.TARGET_LANGUAGES.filter(target => {
+    const toTranslate = Constants.TARGET_LANGUAGE_CODES.filter(target => {
       for (const translation of translations) {
         if (target === translation.lang) {
           return false;
@@ -126,8 +127,18 @@ module.exports = class App {
       }
     }
 
+    // 10. Generate the new manifest with translation files.
+    const languagesFileGenerator = new LanguagesFileGenerator();
+    const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
+    console.log(newLanguages);
+
+    console.log('final translations');
+    console.log(finalTranslations);
     // 9. Save the new translation files to S3.
-    const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);
+    const fileBundle = await s3Coordinator.saveTranslationFiles(
+      finalTranslations,
+      newLanguages
+    );
 
     // 10. Create a new zip file with the translated files for download.
     const download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
