@@ -49,16 +49,17 @@ const s3Zip = require('s3-zip');
     for (const entity of Object.entries(translations)) {
       const [language, translated] = entity;
       const buffer = Buffer.from(JSON.stringify(translated, null, 2));
+      const filePath = `translations/${language}.json`;
       const params = {
         Bucket: this.bucketName,
-        Key: `${this.downloadsDir}/${this.packageId}/${language}.json`,
+        Key: `${this.downloadsDir}/${this.packageId}/${filePath}`,
         Body: buffer,
         ContentEncoding: 'base64',
         ContentType: 'application/json',
       };
 
       await this.s3.upload(params).promise();
-      files.push(`${language}.json`);
+      files.push(filePath);
     }
 
     // Upload new languages file.

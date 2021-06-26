@@ -28,6 +28,8 @@ module.exports = class App {
     let finalTranslations;
     let packageName;
     let ddbRecords;
+    let fileBundle;
+    let download;
 
     const ddbCoordinator = new DDBCoordinator();
 
@@ -135,13 +137,25 @@ module.exports = class App {
     console.log('final translations');
     console.log(finalTranslations);
     // 9. Save the new translation files to S3.
-    const fileBundle = await s3Coordinator.saveTranslationFiles(
-      finalTranslations,
-      newLanguages
-    );
+    try {
+      fileBundle = await s3Coordinator.saveTranslationFiles(
+        finalTranslations,
+        newLanguages
+      );
+    } catch (e) {
+      return this._failureResponse(
+        `Could not save new translation files: ${e.message}`
+      );
+    }
 
     // 10. Create a new zip file with the translated files for download.
-    const download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
+    try {
+      download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
+    } catch (e) {
+      return this._failureResponse(
+        `Could not create final zip download bundle: ${e.message}`
+      );
+    }
 
     console.log(download);
 
