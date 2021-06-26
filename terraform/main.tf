@@ -14,6 +14,10 @@ module "s3_instance" {
   source = "./modules/s3"
 }
 
+module "ddb_instance" {
+  source = "./modules/ddb"
+}
+
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
@@ -26,9 +30,9 @@ module "lambda_function" {
   attach_policies = true
   number_of_policies = 3
   policies = [
-    module.s3_instance.s3_iam_policy,
     aws_iam_policy.translate_access.arn,
-    aws_iam_policy.ddb_access.arn,
+    module.s3_instance.s3_iam_policy,
+    module.ddb_instance.ddb_iam_policy,
   ]
 
   source_path = "../app"
@@ -43,27 +47,6 @@ module "lambda_function" {
 resource "aws_iam_role" "lambda_exec" {
    name = "foundry-magic-l18n-lambda-exec"
    assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
-}
-
-resource "aws_iam_policy" "ddb_access" {
-  name        = "ddb_access_policy"
-  description = "Access the Translations table within DynamoDB"
-
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid: "DDBTranslationsTableFullAccess"
-        Action = [
-          "dynamodb:*",
-        ]
-        Effect   = "Allow"
-        Resource = aws_dynamodb_table.translations.arn
-      }
-    ]
-  })
 }
 
 resource "aws_iam_policy" "translate_access" {
