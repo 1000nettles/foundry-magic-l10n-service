@@ -70,11 +70,13 @@ const s3Zip = require('s3-zip');
     const { s3WriteStream, uploadPromise } = this._uploadStream({
       Bucket: this.bucketName,
       Key: this.finalPackageFile,
-    });
+    }, true);
 
     await s3Zip
       .archive({ region: this.region, bucket: this.bucketName}, fileBundle.directory, fileBundle.files)
       .pipe(s3WriteStream);
+
+    return this.finalPackageFile;
   }
 
   /**
@@ -107,13 +109,19 @@ const s3Zip = require('s3-zip');
    *
    * Solution found here: https://stackoverflow.com/a/50291380/823549
    */
-  _uploadStream({ Bucket, Key }) {
+  _uploadStream({ Bucket, Key }, isPublic = false) {
     const s3WriteStream = new stream.PassThrough();
-    const uploadPromise = this.s3.upload({
+    const params = {
       Bucket,
       Key,
       Body: s3WriteStream,
-    }).promise();
+    };
+
+    if (isPublic) {
+      params.ACL = 'public-read';
+    }
+
+    const uploadPromise = this.s3.upload(params).promise();
 
     return {
       s3WriteStream,

@@ -130,18 +130,20 @@ module.exports = class App {
     const fileBundle = await s3Coordinator.saveTranslationFiles(finalTranslations);
 
     // 10. Create a new zip file with the translated files for download.
-    await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
+    const download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
 
-    return this._successResponse();
+    return this._successResponse(download);
   }
 
-  _successResponse() {
+  _successResponse(download) {
     return {
       statusCode: 200,
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Type': 'application/json',
       },
-      body: '<p>Hello world! I am the start of the FoundryVTT Magic L18n function.</p>',
+      body: JSON.stringify({
+        download,
+      }),
     };
   }
 
