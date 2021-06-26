@@ -76,7 +76,9 @@ const s3Zip = require('s3-zip');
       .archive({ region: this.region, bucket: this.bucketName}, fileBundle.directory, fileBundle.files)
       .pipe(s3WriteStream);
 
-    return this.finalPackageFile;
+    const results = await uploadPromise;
+
+    return results.Location;
   }
 
   /**

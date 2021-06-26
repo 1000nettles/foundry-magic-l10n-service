@@ -1,12 +1,12 @@
 'use strict';
 
-const Localize = require('./src/App');
+const App = require('./src/App');
 
 /**
  * The main Lambda entry point.
  */
-exports.handler = function (event, context, callback) {
-  const localize = new Localize();
-  const response = localize.execute(event);
+exports.handler = async function (event, context, callback) {
+  const app = new App();
+  const response = await app.execute(event);
   callback(null, response);
 }
