@@ -132,6 +132,8 @@ module.exports = class App {
     // 10. Create a new zip file with the translated files for download.
     const download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
 
+    console.log(download);
+
     return this._successResponse(download);
   }
 

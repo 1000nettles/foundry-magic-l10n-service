@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const fs = require('fs');
 const fetch = require('node-fetch');
 const stream = require('stream');
 const crypto = require('crypto');
@@ -15,8 +16,8 @@ const s3Zip = require('s3-zip');
   constructor(packageName) {
     this.packageId = `${packageName}-${crypto.randomBytes(8).toString('hex')}`;
     this.packageFile = `packages_orig/${this.packageId}.zip`;
-    this.finalPackageFile = `processed/${this.packageId}.zip`;
-    this.processedDir = 'processed';
+    this.finalPackageFile = `downloads/${this.packageId}.zip`;
+    this.downloadsDir = 'downloads';
     this.bucketName = 'foundry-magic-l18n';
     this.region = 'us-east-1';
     this.s3 = new AWS.S3({ region: this.region, apiVersion: '2006-03-01' });
@@ -50,7 +51,7 @@ const s3Zip = require('s3-zip');
       const buffer = Buffer.from(JSON.stringify(translated));
       const params = {
         Bucket: this.bucketName,
-        Key: `${this.processedDir}/${this.packageId}/${language}.json`,
+        Key: `${this.downloadsDir}/${this.packageId}/${language}.json`,
         Body: buffer,
         ContentEncoding: 'base64',
         ContentType: 'application/json',
@@ -60,8 +61,30 @@ const s3Zip = require('s3-zip');
       files.push(`${language}.json`);
     }
 
+    // Upload the files which are included in every compiled package.
+     const extraFiles = [
+       {
+         path: './files/LICENSE',
+         name: 'LICENSE',
+       },
+       {
+         path: './files/README.md',
+         name: 'README.md',
+       },
+     ]
+     for (const file of extraFiles) {
+       const fileContent = fs.readFileSync(file.path);
+       const params = {
+         Bucket: this.bucketName,
+         Key: `${this.downloadsDir}/${this.packageId}/${file.name}`,
+         Body: fileContent,
+       };
+       await this.s3.upload(params).promise();
+       files.push(file.name);
+     }
+
     return {
-      directory: `${this.processedDir}/${this.packageId}`,
+      directory: `${this.downloadsDir}/${this.packageId}`,
       files,
     };
   }
@@ -73,7 +96,7 @@ const s3Zip = require('s3-zip');
     }, true);
 
     await s3Zip
-      .archive({ region: this.region, bucket: this.bucketName}, fileBundle.directory, fileBundle.files)
+      .archive({ region: this.region, bucket: this.bucketName, preserveFolderStructure: true }, fileBundle.directory, fileBundle.files)
       .pipe(s3WriteStream);
 
     const results = await uploadPromise;
