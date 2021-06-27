@@ -7,9 +7,17 @@ resource "aws_s3_bucket" "instance" {
   }
 
   versioning {
-    enabled = true
+    enabled = false
   }
 
+  lifecycle_rule {
+    id      = "expire"
+    enabled = true
+
+    expiration {
+      days = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_object" "packages_orig_dir" {
