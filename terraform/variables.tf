@@ -1,5 +1,5 @@
-variable "manifest_stage_name" {
-  description = "The stage name of the API Gateway `manifest` stage"
+variable "localize_stage_name" {
+  description = "The stage name of the API Gateway `localize` stage"
   type = string
-  default = "manifest"
+  default = "localize"
 }

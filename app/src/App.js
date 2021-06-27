@@ -15,13 +15,6 @@ const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 module.exports = class App {
 
   async execute(event) {
-    if (!event?.body) {
-      return this._failureResponse(
-        `No request body defined`
-      );
-    }
-
-    let body;
     let manifest;
     let translations;
     let translateResult;
@@ -30,27 +23,22 @@ module.exports = class App {
     let ddbRecords;
     let fileBundle;
     let download;
-
     const ddbCoordinator = new DDBCoordinator();
 
-    // 1. Get and validate the body of the request. Determine the manifest URL.
-    try {
-      body = JSON.parse(event.body);
-    } catch (e) {
+    // 1. Determine the manifest URL.
+    if (!event?.queryStringParameters?.manifest_url) {
       return this._failureResponse(
-        `Could not parse body. ${e.message}`
+        'No manifest URL defined in "manifest_url" query param'
       );
     }
 
-    if (!body || !body?.manifest_url) {
-      return this._failureResponse('No manifest URL defined');
-    }
+    const manifestUrl = event.queryStringParameters.manifest_url;
 
     // 2. Get the full manifest JSON.
     const manifestRetriever = new ManifestRetriever();
 
     try {
-      manifest = await manifestRetriever.retrieve(body.manifest_url);
+      manifest = await manifestRetriever.retrieve(manifestUrl);
     } catch (e) {
       return this._failureResponse(e.message);
     }
