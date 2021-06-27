@@ -15,10 +15,23 @@ module.exports = class Constants {
    */
   static get TARGET_LANGUAGES() {
     return [
-      { code: 'en', name: 'English' },
+      { code: 'ar', name: 'Arabic' },
+      { code: 'ca', name: 'Catalan' },
+      { code: 'zh', name: 'Chinese (Simplified)' },
+      { code: 'zh-TW', name: 'Chinese (Traditional)' },
       { code: 'cs', name: 'Czech' },
+      { code: 'en', name: 'English' },
+      { code: 'fi', name: 'Finnish' },
       { code: 'fr', name: 'French' },
-      { code: 'cy', name: 'Welsh' },
+      { code: 'de', name: 'German' },
+      { code: 'it', name: 'Italian' },
+      { code: 'ja', name: 'Japanese' },
+      { code: 'ko', name: 'Korean' },
+      { code: 'pl', name: 'Polish' },
+      { code: 'pt', name: 'Portuguese' },
+      { code: 'ru', name: 'Russian' },
+      { code: 'es', name: 'Spanish' },
+      { code: 'sv', name: 'Swedish' },
     ];
   }
 

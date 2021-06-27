@@ -59,6 +59,8 @@ module.exports = class Translator {
           text
         );
 
+        finalTranslations[target][stringId] = translated;
+
         ddbRecords.push({
           Source: Constants.BASE_LANGUAGE_CODE,
           SourceText: text,
