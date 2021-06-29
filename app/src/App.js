@@ -14,29 +14,43 @@ const LanguagesFileGenerator = require('./LanguagesFileGenerator');
  */
 module.exports = class App {
 
+  /**
+   * Execute the main functionality of the application.
+   *
+   * @param {object} event
+   *   An event passed from the lambda.
+   *
+   * @return {object}
+   *   An HTTP response structured for the lambda.
+   */
   async execute(event) {
+    let manifestUrl;
     let manifest;
+    let packageFile;
     let translations;
+    let toTranslateTo;
     let translateResult;
     let finalTranslations;
-    let packageName;
     let ddbRecords;
     let fileBundle;
     let download;
+
+    // Initialize our dependencies.
+    const manifestRetriever = new ManifestRetriever();
+    const manifestValidator = new ManifestValidator();
     const ddbCoordinator = new DDBCoordinator();
+    const translationExtractor = new TranslationExtractor();
+    const translator = new Translator(ddbCoordinator);
+    const languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Determine the manifest URL.
-    if (!event?.queryStringParameters?.manifest_url) {
-      return this._failureResponse(
-        'No manifest URL defined in "manifest_url" query param'
-      );
+    try {
+      manifestUrl = this._getManifestUrl(event);
+    } catch (e) {
+      return this._failureResponse(e.message);
     }
 
-    const manifestUrl = event.queryStringParameters.manifest_url;
-
     // 2. Get the full manifest JSON.
-    const manifestRetriever = new ManifestRetriever();
-
     try {
       manifest = await manifestRetriever.retrieve(manifestUrl);
     } catch (e) {
@@ -44,24 +58,23 @@ module.exports = class App {
     }
 
     // 3. Ensure there's a valid `languages` section in the manifest.
-    const manifestValidator = new ManifestValidator();
-
     try {
       manifestValidator.validate(manifest);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    packageName = manifest.name;
-
     // 4. Get and store the package zip.
-    const s3Coordinator = new S3Coordinator(packageName);
-    const packageFile = await s3Coordinator.retrievePackage(manifest.download);
+    const s3Coordinator = new S3Coordinator(manifest.name);
+
+    try {
+      packageFile = await s3Coordinator.retrievePackage(manifest.download);
+    } catch (e) {
+      return this._failureResponse(`Could not retrieve package: ${e.message}`);
+    }
 
     // 5. Extract the translations from the package, depending on which ones
     //    are listed in the manifest.
-    const translationExtractor = new TranslationExtractor();
-
     try {
       translations = await translationExtractor
         .extract(packageFile, manifest.languages);
@@ -72,29 +85,17 @@ module.exports = class App {
     }
 
     // 6. Compare translations to the target translations we want.
-    const toTranslate = Constants.TARGET_LANGUAGE_CODES.filter(target => {
-      for (const translation of translations) {
-        if (target === translation.lang) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    if (!toTranslate.length) {
-      return this._failureResponse(
-        'Cannot find any target languages to translate to'
-      );
+    try {
+      toTranslateTo = this._getLanguagesToTranslateTo(translations);
+    } catch (e) {
+      return this._failureResponse(e.message);
     }
 
     // 7. Actually translate to the strings to the desired languages.
-    const translator = new Translator(ddbCoordinator);
-
     try {
        translateResult = await translator.translate(
         translations,
-        toTranslate
+        toTranslateTo
       );
     } catch (e) {
       return this._failureResponse(
@@ -117,14 +118,13 @@ module.exports = class App {
       }
     }
 
-    // 10. Generate the new manifest with translation files.
-    const languagesFileGenerator = new LanguagesFileGenerator();
+    // 9. Generate the new manifest with translation files.
     const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
     console.log(newLanguages);
 
     console.log('final translations');
     console.log(finalTranslations);
-    // 9. Save the new translation files to S3.
+    // 10. Save the new translation files to S3.
     try {
       fileBundle = await s3Coordinator.saveTranslationFiles(
         finalTranslations,
@@ -136,7 +136,7 @@ module.exports = class App {
       );
     }
 
-    // 10. Create a new zip file with the translated files for download.
+    // 11. Create a new zip file with the translated files for download.
     try {
       download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
     } catch (e) {
@@ -148,6 +148,56 @@ module.exports = class App {
     console.log(download);
 
     return this._successResponse(download);
+  }
+
+  /**
+   * Get the passed manifest URL.
+   *
+   * @param {object} event
+   *   The event from the lambda.
+   *
+   * @return {string}
+   *   The manifest URL.
+   *
+   * @private
+   */
+  _getManifestUrl(event) {
+    const manifestUrl = event?.queryStringParameters?.manifest_url;
+    if (!manifestUrl) {
+      throw new Error('No manifest URL defined in "manifest_url" query param');
+    }
+
+    return manifestUrl;
+  }
+
+  /**
+   * Given existing languages within the module, which ones are missing for
+   * us to translate to?
+   *
+   * @param {array} languages
+   *   An array of FoundryVTT manifest languages entries.
+   *
+   * @return {array}
+   *   The array of languages to translate to.
+   *
+   * @private
+   */
+  _getLanguagesToTranslateTo(languages) {
+    const toTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
+      for (const language of languages) {
+        if (target === language.lang) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    if (!toTranslateTo.length) {
+      throw new Error('Cannot find any target languages to translate to');
+    }
+
+    return toTranslateTo;
   }
 
   _successResponse(download) {
