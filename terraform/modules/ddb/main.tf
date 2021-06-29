@@ -24,6 +24,32 @@ resource "aws_dynamodb_table" "translations" {
   }
 }
 
+resource "aws_dynamodb_table" "translations_jobs" {
+  name = "TranslationsJobs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key = "ID"
+  range_key = "Jobs"
+
+  attribute {
+    name = "ID"
+    type = "S"
+  }
+
+  attribute {
+    name = "Jobs"
+    type = "S"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = {
+    Name = "ddb-translations-jobs"
+    Environment = "staging"
+  }
+}
+
 resource "aws_iam_policy" "ddb_access" {
   name        = "ddb_access_policy"
   description = "Access the Translations table within DynamoDB"
@@ -39,18 +65,20 @@ resource "aws_iam_policy" "ddb_access" {
           "dynamodb:*",
         ]
         Effect   = "Allow"
-        Resource = aws_dynamodb_table.translations.arn
+        Resource = [
+          aws_dynamodb_table.translations.arn,
+          aws_dynamodb_table.translations_jobs.arn
+        ]
       }
     ]
   })
 }
 
-output "table" {
-  value = aws_dynamodb_table.translations.arn
-}
-
-output "table_name" {
-  value = aws_dynamodb_table.translations.name
+output "tables" {
+  value = [
+    aws_dynamodb_table.translations.arn,
+    aws_dynamodb_table.translations_jobs.arn
+  ]
 }
 
 output "ddb_iam_policy" {

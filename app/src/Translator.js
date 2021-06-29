@@ -15,7 +15,7 @@ module.exports = class Translator {
    *   The injected DDBCoordinator instance.
    */
   constructor(ddbCoordinator) {
-    AWS.config.update({ region: 'us-east-1' });
+    AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
     this.ddbCoordinator = ddbCoordinator;
   }
