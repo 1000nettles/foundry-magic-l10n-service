@@ -47,11 +47,53 @@ module "lambda_function" {
 resource "aws_iam_role" "lambda_exec" {
   name = "foundry-magic-l18n-lambda-exec"
   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
-  managed_policy_arns = [
-    aws_iam_policy.translate_access.arn,
-    module.s3_instance.s3_iam_policy,
-    module.ddb_instance.ddb_iam_policy,
-  ]
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_lambda_policy" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+// Attach all our custom policies to our main policy
+resource "aws_iam_role_policy_attachment" "attach_pass_role_policy" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.pass_role_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach_translate_access" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.translate_access.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach_s3_iam_policy" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = module.s3_instance.s3_iam_policy
+}
+
+resource "aws_iam_role_policy_attachment" "attach_ddb_iam_policy" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = module.ddb_instance.ddb_iam_policy
+}
+
+resource "aws_iam_policy" "pass_role_policy" {
+  name        = "pass_role_policy"
+  description = "Allow our role to pass itself"
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "iam:GetRole",
+          "iam:PassRole"
+        ]
+        Effect   = "Allow"
+        Resource = aws_iam_role.lambda_exec.arn
+      }
+    ]
+  })
 }
 
 resource "aws_iam_policy" "translate_access" {
