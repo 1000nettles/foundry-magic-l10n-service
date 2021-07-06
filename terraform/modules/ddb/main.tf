@@ -28,15 +28,9 @@ resource "aws_dynamodb_table" "translations_jobs" {
   name = "TranslationsJobs"
   billing_mode = "PAY_PER_REQUEST"
   hash_key = "ID"
-  range_key = "Jobs"
 
   attribute {
     name = "ID"
-    type = "S"
-  }
-
-  attribute {
-    name = "Jobs"
     type = "S"
   }
 
