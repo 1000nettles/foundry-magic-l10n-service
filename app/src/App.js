@@ -40,7 +40,6 @@ module.exports = class App {
     const manifestValidator = new ManifestValidator();
     const ddbCoordinator = new DDBCoordinator();
     const translationExtractor = new TranslationExtractor();
-    const translator = new Translator(ddbCoordinator);
     const languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Determine the manifest URL.
@@ -66,6 +65,7 @@ module.exports = class App {
 
     // 4. Get and store the package zip.
     const s3Coordinator = new S3Coordinator(manifest.name);
+    const translator = new Translator(ddbCoordinator, s3Coordinator);
 
     try {
       packageFile = await s3Coordinator.retrievePackage(manifest.download);
@@ -103,12 +103,17 @@ module.exports = class App {
       );
     }
 
+    console.log('returning...');
+    // For now, return early to only test the batching functionality.
+    return;
+
     finalTranslations = translateResult.finalTranslations;
     ddbRecords = translateResult.ddbRecords;
 
     // 8. It's a valid case that we may not have any records to actually save
     // afterwards. This means that all translations are currently in DynamoDB.
-    if (ddbRecords.length) {
+    // Disable so we can test batching...
+    /*if (ddbRecords.length) {
       try {
         await ddbCoordinator.save(ddbRecords);
       } catch (e) {
@@ -116,7 +121,7 @@ module.exports = class App {
           `Could not save data into Translations: ${e.message}`
         );
       }
-    }
+    }*/
 
     // 9. Generate the new manifest with translation files.
     const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
@@ -174,18 +179,18 @@ module.exports = class App {
    * Given existing languages within the module, which ones are missing for
    * us to translate to?
    *
-   * @param {array} languages
-   *   An array of FoundryVTT manifest languages entries.
+   * @param {array} translations
+   *   An array of FoundryVTT translations.
    *
    * @return {array}
    *   The array of languages to translate to.
    *
    * @private
    */
-  _getLanguagesToTranslateTo(languages) {
+  _getLanguagesToTranslateTo(translations) {
     const toTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
-      for (const language of languages) {
-        if (target === language.lang) {
+      for (const translation of translations) {
+        if (target === translation.lang) {
           return false;
         }
       }
@@ -194,7 +199,7 @@ module.exports = class App {
     });
 
     if (!toTranslateTo.length) {
-      throw new Error('Cannot find any target languages to translate to');
+      throw new Error('Cannot find any target translations to translate to');
     }
 
     return toTranslateTo;

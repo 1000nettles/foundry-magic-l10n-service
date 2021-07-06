@@ -14,28 +14,29 @@ module.exports = class DDBCoordinator {
   }
 
   /**
-   * Get the translation from a target language code and the text.
+   * Check if the translation from a text exists.
    *
-   * Both params are necessary!
-   *
-   * @param {string} target
-   *   The target language code to query for.
    * @param {string} text
    *   The original, untranslated text to query for.
    *
    * @return {Promise<object>}
    *   A promise containing the record. Empty object if cannot be found.
    */
-  async get(target, text) {
+  async exists(text) {
     const params = {
-      Key: {
-        Target: target,
-        SourceText: text,
-      },
       TableName: Constants.TRANSLATIONS_TABLE_NAME,
+      KeyConditionExpression: '#SourceText = :SourceText',
+      ExpressionAttributeNames: {
+        '#SourceText': 'SourceText',
+      },
+      ExpressionAttributeValues: {
+        ':SourceText': text,
+      },
     };
 
-    return await this.docClient.get(params).promise();
+    const result = await this.docClient.query(params).promise();
+
+    return result.Count > 0;
   }
 
   /**

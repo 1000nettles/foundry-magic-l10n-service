@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const stream = require('stream');
 const crypto = require('crypto');
 const s3Zip = require('s3-zip');
+const Constants = require('./Constants');
 
 /**
  * A class to coordinate uploads and downloads to AWS S3.
@@ -32,6 +33,31 @@ const s3Zip = require('s3-zip');
   async retrievePackage(downloadUrl) {
     await this._downloadAndSave(downloadUrl);
     return this.packageFile;
+  }
+
+  getBatchFilesPackageInputDir() {
+    return `${Constants.BATCH_FILES_DIR}/${this.packageId}/input`;
+  }
+
+   getBatchFilesPackageOutputDir() {
+     return `${Constants.BATCH_FILES_DIR}/${this.packageId}/output`;
+   }
+
+  async saveBatchFile(content) {
+    console.log('creating buffer');
+    console.log(content);
+    const buffer = Buffer.from(content);
+    const filePath = `${this.getBatchFilesPackageInputDir()}/${Constants.SOURCE_BATCH_FILENAME}.txt`;
+    const params = {
+      Bucket: this.bucketName,
+      Key: filePath,
+      Body: buffer,
+      ContentEncoding: 'base64',
+      ContentType: 'text/plain',
+    };
+
+    console.log('starting upload');
+    return this.s3.upload(params).promise();
   }
 
    /**

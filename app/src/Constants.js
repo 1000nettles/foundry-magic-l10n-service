@@ -19,7 +19,7 @@ module.exports = class Constants {
       { code: 'ca', name: 'Catalan' },
       { code: 'zh', name: 'Chinese (Simplified)' },
       { code: 'zh-TW', name: 'Chinese (Traditional)' },
-      { code: 'cs', name: 'Czech' },
+      /*{ code: 'cs', name: 'Czech' },
       { code: 'en', name: 'English' },
       { code: 'fi', name: 'Finnish' },
       { code: 'fr', name: 'French' },
@@ -31,7 +31,7 @@ module.exports = class Constants {
       { code: 'pt', name: 'Portuguese' },
       { code: 'ru', name: 'Russian' },
       { code: 'es', name: 'Spanish' },
-      { code: 'sv', name: 'Swedish' },
+      { code: 'sv', name: 'Swedish' },*/
     ];
   }
 
@@ -52,11 +52,39 @@ module.exports = class Constants {
   }
 
   /**
+   * The filename of the "source batch" text file.
+   *
+   * @return {string}
+   */
+  static get SOURCE_BATCH_FILENAME() {
+    return 'sourcebatch.txt';
+  }
+
+  /**
+   * The directory for the batch files.
+   *
+   * @return {string}
+   */
+  static get BATCH_FILES_DIR() {
+    return 'batchFiles';
+  }
+
+  /**
    * The table name of the Translations table.
    *
    * @return {string}
    */
   static get TRANSLATIONS_TABLE_NAME() {
     return 'Translations';
+  }
+
+  /**
+   * The newline separator for our batch file text file. Necessary to split
+   * the source text this way so the translations don't intermingle.
+   *
+   * @return {string}
+   */
+  static get BATCH_NEWLINE_SEPARATOR() {
+    return '<SPLIT>';
   }
 }

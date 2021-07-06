@@ -2,6 +2,7 @@
 
 const AWS = require('aws-sdk');
 const Constants = require('./Constants');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * A class to execute the actual translation of strings.
@@ -14,10 +15,11 @@ module.exports = class Translator {
    * @param {DDBCoordinator} ddbCoordinator
    *   The injected DDBCoordinator instance.
    */
-  constructor(ddbCoordinator) {
+  constructor(ddbCoordinator, s3Coordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
     this.ddbCoordinator = ddbCoordinator;
+    this.s3Coordinator = s3Coordinator;
   }
 
   /**
@@ -32,49 +34,58 @@ module.exports = class Translator {
    *   A promise containing the final translations and DynamoDB records.
    */
   async translate(translations, toTranslate) {
+    const batchFileContent = await this._getBatchFileContent(translations);
+    await this.s3Coordinator.saveBatchFile(batchFileContent);
+
+    // TODO: if all translations are already stored, exit here and return
+    // all the stored translations.
+
+    const params = {
+      ClientToken: uuidv4(),
+      DataAccessRoleArn: process.env.ROLE_ARN,
+      InputDataConfig: {
+        ContentType: 'text/plain',
+        S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/`,
+      },
+      OutputDataConfig: {
+        S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageOutputDir()}/`,
+      },
+      SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
+      TargetLanguageCodes: ['fr'],
+      JobName: 'test_fr2',
+    };
+    console.log(params);
+
+    const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
+    console.log(batchResult);
+  }
+
+  /**
+   * Hydrate the batch file content with source text for later processing.
+   *
+   * @param {array} translations
+   *   An array of the source translation texts that we want to include.
+   *
+   * @return {Promise<string>}
+   *   The batch content in plain text as a string.
+   *
+   * @private
+   */
+  async _getBatchFileContent(translations) {
     const baseTranslation = this._getBaseTranslation(translations);
-    let finalTranslations = {};
-    let ddbRecords = [];
 
-    for (const target of toTranslate) {
-      for (const entry of Object.entries(baseTranslation.content)) {
-        let translated;
-        finalTranslations[target] = finalTranslations[target] || {};
-        const [stringId, text] = entry;
-
-        // Check first if we have the translation already stored.
-        // If we have it stored, just return it.
-        const storedTranslation = await this.ddbCoordinator.get(target, text);
-        if (Object.keys(storedTranslation).length > 0) {
-          finalTranslations[target][stringId] = storedTranslation.Item.TargetText;
-
-          // This `break` is for testing purposes so we don't run out of
-          // AWS Translate bandwidth.
-          break;
-        }
-
-        translated = await this._getAWSTranslation(
-          baseTranslation.lang,
-          target,
-          text
-        );
-
-        finalTranslations[target][stringId] = translated;
-
-        ddbRecords.push({
-          Source: Constants.BASE_LANGUAGE_CODE,
-          SourceText: text,
-          Target: target,
-          TargetText: translated,
-        });
-
-        // This `break` is for testing purposes so we don't run out of
-        // AWS Translate bandwidth.
-        break;
+    let batchContent = '';
+    for (const [ stringId, text ] of Object.entries(baseTranslation.content)) {
+      // Check first if we have the translation already stored.
+      // If we have it stored, don't include it in our batch file.
+      const exists = await this.ddbCoordinator.exists(text);
+      console.log(`${text} ${exists}`);
+      if (!exists) {
+        batchContent += text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
       }
     }
 
-    return { finalTranslations, ddbRecords };
+    return batchContent;
   }
 
   /**
