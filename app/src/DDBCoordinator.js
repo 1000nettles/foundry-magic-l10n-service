@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
 const Constants = require('./Constants');
 
 module.exports = class DDBCoordinator {
@@ -69,6 +70,30 @@ module.exports = class DDBCoordinator {
 
       await this.docClient.batchWrite(params).promise();
     }
+  }
+
+  /**
+   * Save the translation jobs.
+   *
+   * @param {array} jobs
+   *   An array of the jobs we want to record.
+   *
+   * @return {string}
+   *   The ID of the `TranslationJob` in UUIDv4 format.
+   */
+  async saveTranslationJob(jobs) {
+    const id = uuidv4();
+    const params = {
+      TableName: Constants.TRANSLATIONS_JOBS_TABLE_NAME,
+      Item: {
+        ID: uuidv4(),
+        Jobs: jobs,
+      },
+    };
+
+    await this.docClient.put(params).promise();
+
+    return id;
   }
 
   /**

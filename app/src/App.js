@@ -104,9 +104,8 @@ module.exports = class App {
       );
     }
 
-    console.log('returning...');
     // For now, return early to only test the batching functionality.
-    return;
+    return this._successResponse(translateResult);
 
     finalTranslations = translateResult.finalTranslations;
     ddbRecords = translateResult.ddbRecords;
@@ -206,14 +205,14 @@ module.exports = class App {
     return toTranslateTo;
   }
 
-  _successResponse(download) {
+  _successResponse(jobsId) {
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        download,
+        jobsId,
       }),
     };
   }

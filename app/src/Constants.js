@@ -79,12 +79,21 @@ module.exports = class Constants {
   }
 
   /**
+   * The table name of the TranslationsJobs table.
+   *
+   * @return {string}
+   */
+  static get TRANSLATIONS_JOBS_TABLE_NAME() {
+    return 'TranslationsJobs';
+  }
+
+  /**
    * The newline separator for our batch file text file. Necessary to split
    * the source text this way so the translations don't intermingle.
    *
    * @return {string}
    */
   static get BATCH_NEWLINE_SEPARATOR() {
-    return '█';
+    return '|||';
   }
 }

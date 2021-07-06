@@ -43,9 +43,10 @@ module.exports = class Translator {
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
-    let batchResults = [];
+    let ddbJobs = [];
 
     for (const target of toTranslate) {
+      const jobName = `${moduleName}-${target}-${Date.now()}`;
       const params = {
         ClientToken: uuidv4(),
         DataAccessRoleArn: process.env.ROLE_ARN,
@@ -58,16 +59,24 @@ module.exports = class Translator {
         },
         SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
         TargetLanguageCodes: [target],
-        JobName: `${moduleName}-${target}-${Date.now()}`,
+        JobName: jobName,
       };
-      console.log(params);
 
       const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
       console.log(batchResult);
-      batchResults.push(batchResult);
+
+      ddbJobs.push({
+        source: Constants.BASE_LANGUAGE_CODE,
+        target,
+        jobName,
+        jobId: batchResult.JobId,
+      });
     }
 
-    return batchResults;
+    const jobsId = await this.ddbCoordinator.saveTranslationJob(ddbJobs);
+    console.log(jobsId);
+
+    return jobsId;
   }
 
   /**
@@ -89,7 +98,7 @@ module.exports = class Translator {
       // Check first if we have the translation already stored.
       // If we have it stored, don't include it in our batch file.
       const exists = await this.ddbCoordinator.exists(text);
-      console.log(`${text} ${exists}`);
+
       if (!exists) {
         batchContent += text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
       }
