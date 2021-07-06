@@ -85,6 +85,6 @@ module.exports = class Constants {
    * @return {string}
    */
   static get BATCH_NEWLINE_SEPARATOR() {
-    return '<SPLIT>';
+    return '█';
   }
 }

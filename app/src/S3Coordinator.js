@@ -47,7 +47,7 @@ const Constants = require('./Constants');
     console.log('creating buffer');
     console.log(content);
     const buffer = Buffer.from(content);
-    const filePath = `${this.getBatchFilesPackageInputDir()}/${Constants.SOURCE_BATCH_FILENAME}.txt`;
+    const filePath = `${this.getBatchFilesPackageInputDir()}/${Constants.SOURCE_BATCH_FILENAME}`;
     const params = {
       Bucket: this.bucketName,
       Key: filePath,
