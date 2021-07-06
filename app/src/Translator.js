@@ -29,35 +29,45 @@ module.exports = class Translator {
    *   A list of Foundry translation contents.
    * @param {array} toTranslate
    *   A list of language codes to translate too.
+   * @param {string} moduleName
+   *   The name of the module we're translating for.
    *
-   * @return {Promise<{finalTranslations: {}, ddbRecords: *[]}>}
-   *   A promise containing the final translations and DynamoDB records.
+   * @return {Promise}
+   *   A promise containing the result of the batch job execution. This is
+   *   NOT the completion of the batch itself.
    */
-  async translate(translations, toTranslate) {
+  async translate(translations, toTranslate, moduleName) {
     const batchFileContent = await this._getBatchFileContent(translations);
     await this.s3Coordinator.saveBatchFile(batchFileContent);
 
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
-    const params = {
-      ClientToken: uuidv4(),
-      DataAccessRoleArn: process.env.ROLE_ARN,
-      InputDataConfig: {
-        ContentType: 'text/plain',
-        S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/`,
-      },
-      OutputDataConfig: {
-        S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageOutputDir()}/`,
-      },
-      SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
-      TargetLanguageCodes: ['fr'],
-      JobName: 'test_fr2',
-    };
-    console.log(params);
+    let batchResults = [];
 
-    const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
-    console.log(batchResult);
+    for (const target of toTranslate) {
+      const params = {
+        ClientToken: uuidv4(),
+        DataAccessRoleArn: process.env.ROLE_ARN,
+        InputDataConfig: {
+          ContentType: 'text/plain',
+          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/`,
+        },
+        OutputDataConfig: {
+          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageOutputDir()}/`,
+        },
+        SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
+        TargetLanguageCodes: [target],
+        JobName: `${moduleName}-${target}-${Date.now()}`,
+      };
+      console.log(params);
+
+      const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
+      console.log(batchResult);
+      batchResults.push(batchResult);
+    }
+
+    return batchResults;
   }
 
   /**

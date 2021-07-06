@@ -17,9 +17,9 @@ module.exports = class Constants {
     return [
       { code: 'ar', name: 'Arabic' },
       { code: 'ca', name: 'Catalan' },
-      { code: 'zh', name: 'Chinese (Simplified)' },
+      /*{ code: 'zh', name: 'Chinese (Simplified)' },
       { code: 'zh-TW', name: 'Chinese (Traditional)' },
-      /*{ code: 'cs', name: 'Czech' },
+      { code: 'cs', name: 'Czech' },
       { code: 'en', name: 'English' },
       { code: 'fi', name: 'Finnish' },
       { code: 'fr', name: 'French' },

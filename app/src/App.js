@@ -95,7 +95,8 @@ module.exports = class App {
     try {
        translateResult = await translator.translate(
         translations,
-        toTranslateTo
+        toTranslateTo,
+        manifest.name,
       );
     } catch (e) {
       return this._failureResponse(
