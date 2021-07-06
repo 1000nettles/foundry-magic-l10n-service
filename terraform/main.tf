@@ -27,13 +27,13 @@ module "lambda_function" {
   runtime       = "nodejs14.x"
   timeout       = 60
 
-  attach_policies = true
-  number_of_policies = 3
-  policies = [
-    aws_iam_policy.translate_access.arn,
-    module.s3_instance.s3_iam_policy,
-    module.ddb_instance.ddb_iam_policy,
-  ]
+  lambda_role = aws_iam_role.lambda_exec.arn
+  create_role = false
+
+  environment_variables = {
+    BUCKET = module.s3_instance.bucket_name
+    ROLE_ARN = aws_iam_role.lambda_exec.arn
+  }
 
   source_path = "../app"
 
@@ -45,8 +45,13 @@ module "lambda_function" {
  # IAM role which dictates what other AWS services the Lambda function
  # may access.
 resource "aws_iam_role" "lambda_exec" {
-   name = "foundry-magic-l18n-lambda-exec"
-   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
+  name = "foundry-magic-l18n-lambda-exec"
+  assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
+  managed_policy_arns = [
+    aws_iam_policy.translate_access.arn,
+    module.s3_instance.s3_iam_policy,
+    module.ddb_instance.ddb_iam_policy,
+  ]
 }
 
 resource "aws_iam_policy" "translate_access" {
@@ -79,7 +84,10 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
 
     principals {
       type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+      identifiers = [
+        "lambda.amazonaws.com",
+        "translate.amazonaws.com"
+      ]
     }
   }
 }
