@@ -5,11 +5,14 @@ const { Constants } = require('shared');
 
 module.exports = class TranslateCoordinator {
 
-
   constructor(ddbCoordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
     this.ddbCoordinator = ddbCoordinator;
+
+    // Provide mechanism for caching our response back from listing text
+    // translation jobs.
+    this.listedTextTranslationJobs = null;
   }
 
   async doJobsExist(jobsId) {
@@ -24,7 +27,29 @@ module.exports = class TranslateCoordinator {
   }
 
   async getJobsStatus(jobsId) {
-    let fullyComplete = true;
+    const listedJobs = await this._getTextTranslationJobs(jobsId);
+
+    console.log(listedJobs);
+
+    if (!listedJobs?.TextTranslationJobPropertiesList) {
+      throw new Error(`No translation jobs listed with ID ${jobsId} found`);
+    }
+
+    let allJobsComplete = true;
+    for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
+      if (jobProperties?.JobStatus !== Constants.AWS_TRANSLATE_BATCH_COMPLETE) {
+        allJobsComplete = false;
+        break;
+      }
+    }
+
+    return allJobsComplete;
+  }
+
+  async _getTextTranslationJobs(jobsId) {
+    if (this.listedTextTranslationJobs) {
+      return this.listedTextTranslationJobs;
+    }
 
     // Our JobName is just the ID of our master job to ensure we can actually
     // use the `list` functionality.
@@ -34,21 +59,12 @@ module.exports = class TranslateCoordinator {
       },
     };
 
-    const listResult = await this.awsTranslate.listTextTranslationJobs(params).promise();
-    console.log(listResult);
+    this.listedTextTranslationJobs = await this
+      .awsTranslate
+      .listTextTranslationJobs(params)
+      .promise();
 
-    if (!listResult?.TextTranslationJobPropertiesList) {
-      throw new Error(`No translation jobs listed with ID ${jobsId} found`);
-    }
-
-    for (const jobProperties of listResult?.TextTranslationJobPropertiesList) {
-      if (jobProperties?.JobStatus !== Constants.AWS_TRANSLATE_BATCH_COMPLETE) {
-        fullyComplete = false;
-        break;
-      }
-    }
-
-    return fullyComplete;
+    return this.listedTextTranslationJobs;
   }
 
 }
