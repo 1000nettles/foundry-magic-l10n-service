@@ -15,8 +15,8 @@ module.exports = class TranslateCoordinator {
     this.listedTextTranslationJobs = null;
   }
 
-  async doJobsExist(jobsId) {
-    const result = await this.ddbCoordinator.getJobs(jobsId);
+  async doJobsExist(masterJobsId) {
+    const result = await this.ddbCoordinator.getJobs(masterJobsId);
     console.log(result.Items[0].data);
 
     if (!result?.Items || !result.Items.length) {
@@ -26,7 +26,7 @@ module.exports = class TranslateCoordinator {
     return true;
   }
 
-  async getJobsStatus(jobsId) {
+  async getMasterJobsStatus(jobsId) {
     const listedJobs = await this._getTextTranslationJobs(jobsId);
 
     console.log(listedJobs);

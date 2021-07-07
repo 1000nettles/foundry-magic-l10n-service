@@ -9,33 +9,33 @@ module.exports = class App {
     let ddbCoordinator;
     let translateCoordinator;
     let doJobsExist;
-    let jobsStatus;
+    let masterJobsStatus;
 
     ddbCoordinator = new DDBCoordinator();
     translateCoordinator = new TranslateCoordinator(ddbCoordinator);
 
-    const jobsId = this._getJobsId(event);
+    const masterJobsId = this._getMasterJobsId(event);
 
     try {
-      doJobsExist = await translateCoordinator.doJobsExist(jobsId);
+      doJobsExist = await translateCoordinator.doJobsExist(masterJobsId);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
     if (!doJobsExist) {
-      return this._failureResponse(`No jobs exist with ID ${jobsId}`);
+      return this._failureResponse(`No jobs exist with ID ${masterJobsId}`);
     }
 
     try {
-      jobsStatus = await translateCoordinator.getJobsStatus(jobsId);
+      masterJobsStatus = await translateCoordinator.getMasterJobsStatus(masterJobsId);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    return this._successResponse(Number(jobsStatus));
+    return this._successResponse(Number(masterJobsStatus));
   }
 
-  _getJobsId(event) {
+  _getMasterJobsId(event) {
     const jobsId = event?.queryStringParameters?.jobs_id;
     if (!jobsId) {
       throw new Error('No Jobs ID defined in "jobs_id" query param');
