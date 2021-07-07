@@ -21,8 +21,8 @@ module "ddb_instance" {
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = "foundry-magic-l18n"
-  description   = "A Lambda function to generate localizations for Foundry systems and modules"
+  function_name = "foundry-magic-l18n-acceptor"
+  description   = "A Lambda function to accept a manifest URL and generate translation batches"
   handler       = "main.handler"
   runtime       = "nodejs14.x"
   timeout       = 60
@@ -35,7 +35,7 @@ module "lambda_function" {
     ROLE_ARN = aws_iam_role.lambda_exec.arn
   }
 
-  source_path = "../app"
+  source_path = "../lambdas/Acceptor"
 
   tags = {
     Name = "foundry-magic-l18n"
@@ -134,7 +134,6 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
   }
 }
 
-
 resource "aws_lambda_permission" "apigw" {
    statement_id  = "AllowAPIGatewayInvoke"
    action        = "lambda:InvokeFunction"
@@ -144,4 +143,8 @@ resource "aws_lambda_permission" "apigw" {
    # The "/*/*" portion grants access from any method on any resource
    # within the API Gateway REST API.
    source_arn = "${aws_api_gateway_rest_api.default.execution_arn}/*"
+}
+
+output "aws_lambda_permission_apigw" {
+  value = aws_lambda_permission.apigw.source_arn
 }

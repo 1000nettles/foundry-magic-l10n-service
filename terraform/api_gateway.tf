@@ -88,7 +88,7 @@ resource "aws_api_gateway_deployment" "default" {
    rest_api_id = aws_api_gateway_rest_api.default.id
 }
 
-resource "aws_api_gateway_stage" "default" {
+resource "aws_api_gateway_stage" "stage" {
   deployment_id = aws_api_gateway_deployment.default.id
   rest_api_id = aws_api_gateway_rest_api.default.id
   depends_on = [aws_cloudwatch_log_group.default]
@@ -97,7 +97,7 @@ resource "aws_api_gateway_stage" "default" {
 
 resource "aws_api_gateway_method_settings" "default" {
   rest_api_id = aws_api_gateway_rest_api.default.id
-  stage_name  = aws_api_gateway_stage.default.stage_name
+  stage_name  = aws_api_gateway_stage.stage.stage_name
   method_path = "localize/GET"
 
   settings {
