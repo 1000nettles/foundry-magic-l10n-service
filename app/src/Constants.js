@@ -70,21 +70,12 @@ module.exports = class Constants {
   }
 
   /**
-   * The table name of the Translations table.
+   * The DDB table name.
    *
    * @return {string}
    */
-  static get TRANSLATIONS_TABLE_NAME() {
-    return 'Translations';
-  }
-
-  /**
-   * The table name of the TranslationsJobs table.
-   *
-   * @return {string}
-   */
-  static get TRANSLATIONS_JOBS_TABLE_NAME() {
-    return 'TranslationsJobs';
+  static get DDB_TABLE_NAME() {
+    return 'FoundryMagicL18n';
   }
 
   /**

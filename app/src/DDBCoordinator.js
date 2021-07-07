@@ -25,7 +25,7 @@ module.exports = class DDBCoordinator {
    */
   async exists(text) {
     const params = {
-      TableName: Constants.TRANSLATIONS_TABLE_NAME,
+      TableName: Constants.DDB_TABLE_NAME,
       KeyConditionExpression: '#SourceText = :SourceText',
       ExpressionAttributeNames: {
         '#SourceText': 'SourceText',
@@ -58,10 +58,10 @@ module.exports = class DDBCoordinator {
         RequestItems: {}
       };
 
-      params.RequestItems[Constants.TRANSLATIONS_TABLE_NAME] = [];
+      params.RequestItems[Constants.DDB_TABLE_NAME] = [];
 
       for (const Item of ddbItemsChunk) {
-        params.RequestItems[Constants.TRANSLATIONS_TABLE_NAME].push({
+        params.RequestItems[Constants.DDB_TABLE_NAME].push({
           PutRequest: {
             Item,
           },
@@ -83,11 +83,17 @@ module.exports = class DDBCoordinator {
    */
   async saveTranslationJob(jobs) {
     const id = uuidv4();
+    const data = {
+      ID: id,
+      Jobs: jobs,
+    };
+
     const params = {
-      TableName: Constants.TRANSLATIONS_JOBS_TABLE_NAME,
+      TableName: Constants.DDB_TABLE_NAME,
       Item: {
-        ID: uuidv4(),
-        Jobs: jobs,
+        pk: 'TRANSLATION_JOBS',
+        sk: `TRANSLATION_JOB#${id}`,
+        data,
       },
     };
 

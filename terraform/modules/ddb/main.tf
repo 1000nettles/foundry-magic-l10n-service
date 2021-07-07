@@ -1,16 +1,16 @@
-resource "aws_dynamodb_table" "translations" {
-  name = "Translations"
+resource "aws_dynamodb_table" "instance" {
+  name = "FoundryMagicL18n"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "SourceText"
-  range_key = "Target"
+  hash_key = "pk"
+  range_key = "sk"
 
   attribute {
-    name = "SourceText"
+    name = "pk"
     type = "S"
   }
 
   attribute {
-    name = "Target"
+    name = "sk"
     type = "S"
   }
 
@@ -19,27 +19,7 @@ resource "aws_dynamodb_table" "translations" {
   }
 
   tags = {
-    Name = "ddb-translations"
-    Environment = "staging"
-  }
-}
-
-resource "aws_dynamodb_table" "translations_jobs" {
-  name = "TranslationsJobs"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key = "ID"
-
-  attribute {
-    name = "ID"
-    type = "S"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  tags = {
-    Name = "ddb-translations-jobs"
+    Name = "ddb-foundry-magic-l18n"
     Environment = "staging"
   }
 }
@@ -60,8 +40,7 @@ resource "aws_iam_policy" "ddb_access" {
         ]
         Effect   = "Allow"
         Resource = [
-          aws_dynamodb_table.translations.arn,
-          aws_dynamodb_table.translations_jobs.arn
+          aws_dynamodb_table.instance.arn
         ]
       }
     ]
@@ -70,8 +49,7 @@ resource "aws_iam_policy" "ddb_access" {
 
 output "tables" {
   value = [
-    aws_dynamodb_table.translations.arn,
-    aws_dynamodb_table.translations_jobs.arn
+    aws_dynamodb_table.instance.arn
   ]
 }
 

@@ -63,7 +63,6 @@ module.exports = class Translator {
       };
 
       const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
-      console.log(batchResult);
 
       ddbJobs.push({
         source: Constants.BASE_LANGUAGE_CODE,
@@ -74,7 +73,6 @@ module.exports = class Translator {
     }
 
     const jobsId = await this.ddbCoordinator.saveTranslationJob(ddbJobs);
-    console.log(jobsId);
 
     return jobsId;
   }
@@ -97,7 +95,8 @@ module.exports = class Translator {
     for (const [ stringId, text ] of Object.entries(baseTranslation.content)) {
       // Check first if we have the translation already stored.
       // If we have it stored, don't include it in our batch file.
-      const exists = await this.ddbCoordinator.exists(text);
+      // const exists = await this.ddbCoordinator.exists(text);
+      const exists = false;
 
       if (!exists) {
         batchContent += text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
