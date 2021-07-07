@@ -18,7 +18,7 @@ module "ddb_instance" {
   source = "./modules/ddb"
 }
 
-module "lambda_function" {
+module "lambda_function_acceptor" {
   source = "terraform-aws-modules/lambda/aws"
 
   function_name = "foundry-magic-l18n-acceptor"
@@ -137,7 +137,7 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
 resource "aws_lambda_permission" "apigw" {
    statement_id  = "AllowAPIGatewayInvoke"
    action        = "lambda:InvokeFunction"
-   function_name = module.lambda_function.lambda_function_name
+   function_name = module.lambda_function_acceptor.lambda_function_name
    principal     = "apigateway.amazonaws.com"
 
    # The "/*/*" portion grants access from any method on any resource
