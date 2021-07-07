@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const { v4: uuidv4 } = require('uuid');
 const { Constants } = require('shared');
 
 module.exports = class DDBCoordinator {
@@ -77,14 +76,15 @@ module.exports = class DDBCoordinator {
    *
    * @param {array} jobs
    *   An array of the jobs we want to record.
+   * @param {string} masterJobId
+   *   The pre-generated UUID representing the master job for all translations.
    *
-   * @return {string}
+   * @return {Promise<string>}
    *   The ID of the `TranslationJob` in UUIDv4 format.
    */
-  async saveTranslationJob(jobs) {
-    const id = uuidv4();
+  saveTranslationJob(jobs, masterJobId) {
     const data = {
-      ID: id,
+      ID: masterJobId,
       Jobs: jobs,
     };
 
@@ -92,14 +92,12 @@ module.exports = class DDBCoordinator {
       TableName: Constants.DDB_TABLE_NAME,
       Item: {
         pk: 'TRANSLATION_JOBS',
-        sk: `TRANSLATION_JOB#${id}`,
+        sk: `TRANSLATION_JOB#${masterJobId}`,
         data,
       },
     };
 
-    await this.docClient.put(params).promise();
-
-    return id;
+    return this.docClient.put(params).promise();
   }
 
   /**

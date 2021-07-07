@@ -43,12 +43,14 @@ module.exports = class Translator {
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
+    const masterJobId = uuidv4();
     let ddbJobs = [];
 
     for (const target of toTranslate) {
-      const jobName = `${moduleName}-${target}-${Date.now()}`;
+      // We need our job name to be our ID so we can `list` later.
+      const jobName = masterJobId;
       const params = {
-        ClientToken: uuidv4(),
+        ClientToken: masterJobId,
         DataAccessRoleArn: process.env.ROLE_ARN,
         InputDataConfig: {
           ContentType: 'text/plain',
@@ -72,9 +74,9 @@ module.exports = class Translator {
       });
     }
 
-    const jobsId = await this.ddbCoordinator.saveTranslationJob(ddbJobs);
+    await this.ddbCoordinator.saveTranslationJob(ddbJobs, masterJobId);
 
-    return jobsId;
+    return masterJobId;
   }
 
   /**

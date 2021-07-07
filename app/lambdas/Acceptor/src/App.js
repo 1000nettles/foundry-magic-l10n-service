@@ -105,6 +105,8 @@ module.exports = class App {
     }
 
     // For now, return early to only test the batching functionality.
+
+    console.log(translateResult);
     return this._successResponse(translateResult);
 
     finalTranslations = translateResult.finalTranslations;

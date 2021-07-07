@@ -7,6 +7,6 @@ const App = require('./src/App');
  */
 exports.handler = async function (event, context, callback) {
   const app = new App();
-  const response = app.execute(event);
+  const response = await app.execute(event);
   callback(null, response);
 }

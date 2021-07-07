@@ -13,7 +13,7 @@ module.exports = class DDBCoordinator {
     this.docClient = new AWS.DynamoDB.DocumentClient();
   }
 
-  async getJobs(id) {
+  getJobs(id) {
     const params = {
       TableName: Constants.DDB_TABLE_NAME,
       KeyConditionExpression: '#pk = :pk and #sk = :sk',
@@ -27,10 +27,7 @@ module.exports = class DDBCoordinator {
       },
     };
 
-    const result = await this.docClient.query(params).promise();
-    console.log(result);
-
-    return result;
+    return this.docClient.query(params).promise();
   }
 
 }

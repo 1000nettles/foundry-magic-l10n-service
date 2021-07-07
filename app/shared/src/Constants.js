@@ -87,4 +87,13 @@ module.exports = class Constants {
   static get BATCH_NEWLINE_SEPARATOR() {
     return '|||';
   }
+
+  /**
+   * The value when a batch file has been completed for processing.
+   *
+   * @return {string}
+   */
+  static get AWS_TRANSLATE_BATCH_COMPLETE() {
+    return 'COMPLETED';
+  }
 }
