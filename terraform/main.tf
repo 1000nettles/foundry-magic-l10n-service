@@ -42,6 +42,30 @@ module "lambda_function_acceptor" {
   }
 }
 
+module "lambda_function_retriever" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name = "foundry-magic-l18n-retriever"
+  description   = "A Lambda function to retrieve the translations, if completed"
+  handler       = "main.handler"
+  runtime       = "nodejs14.x"
+  timeout       = 60
+
+  lambda_role = aws_iam_role.lambda_exec.arn
+  create_role = false
+
+  environment_variables = {
+    BUCKET = module.s3_instance.bucket_name
+    ROLE_ARN = aws_iam_role.lambda_exec.arn
+  }
+
+  source_path = "../app/lambdas/Retriever"
+
+  tags = {
+    Name = "foundry-magic-l18n"
+  }
+}
+
  # IAM role which dictates what other AWS services the Lambda function
  # may access.
 resource "aws_iam_role" "lambda_exec" {
@@ -134,7 +158,7 @@ data "aws_iam_policy_document" "instance_assume_role_policy" {
   }
 }
 
-resource "aws_lambda_permission" "apigw" {
+resource "aws_lambda_permission" "apigw_permission_acceptor" {
    statement_id  = "AllowAPIGatewayInvoke"
    action        = "lambda:InvokeFunction"
    function_name = module.lambda_function_acceptor.lambda_function_name
@@ -145,6 +169,13 @@ resource "aws_lambda_permission" "apigw" {
    source_arn = "${aws_api_gateway_rest_api.default.execution_arn}/*"
 }
 
-output "aws_lambda_permission_apigw" {
-  value = aws_lambda_permission.apigw.source_arn
+resource "aws_lambda_permission" "apigw_permission_retriever" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_function_retriever.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.default.execution_arn}/*"
 }

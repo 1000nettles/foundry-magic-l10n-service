@@ -1,0 +1,11 @@
+{
+  "name": "foundry-magic-l18n-retriever",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "shared": "file:../../shared"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.932.0"
+  }
+}

@@ -63,6 +63,12 @@ resource "aws_api_gateway_resource" "localize" {
   path_part = "localize"
 }
 
+resource "aws_api_gateway_resource" "retrieve" {
+  rest_api_id = aws_api_gateway_rest_api.default.id
+  parent_id = aws_api_gateway_rest_api.default.root_resource_id
+  path_part = "retrieve"
+}
+
 resource "aws_api_gateway_method" "localize_get" {
   rest_api_id = aws_api_gateway_rest_api.default.id
   resource_id = aws_api_gateway_resource.localize.id
@@ -70,7 +76,14 @@ resource "aws_api_gateway_method" "localize_get" {
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "lambda" {
+resource "aws_api_gateway_method" "retrieve_get" {
+  rest_api_id = aws_api_gateway_rest_api.default.id
+  resource_id = aws_api_gateway_resource.retrieve.id
+  http_method = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda_acceptor" {
   rest_api_id = aws_api_gateway_rest_api.default.id
   resource_id = aws_api_gateway_method.localize_get.resource_id
   http_method = aws_api_gateway_method.localize_get.http_method
@@ -80,9 +93,20 @@ resource "aws_api_gateway_integration" "lambda" {
   uri = module.lambda_function_acceptor.lambda_function_invoke_arn
 }
 
+resource "aws_api_gateway_integration" "lambda_retriever" {
+  rest_api_id = aws_api_gateway_rest_api.default.id
+  resource_id = aws_api_gateway_method.retrieve_get.resource_id
+  http_method = aws_api_gateway_method.retrieve_get.http_method
+
+  integration_http_method = "POST"
+  type = "AWS_PROXY"
+  uri = module.lambda_function_retriever.lambda_function_invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "default" {
    depends_on = [
-     aws_api_gateway_integration.lambda,
+     aws_api_gateway_integration.lambda_acceptor,
+     aws_api_gateway_integration.lambda_retriever,
    ]
 
    rest_api_id = aws_api_gateway_rest_api.default.id
