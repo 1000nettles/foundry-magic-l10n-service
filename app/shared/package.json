@@ -1,0 +1,6 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "A library to share code between our Foundry Magic L18n Lambdas.",
+  "main": "index.js"
+}

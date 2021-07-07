@@ -1,4 +1,4 @@
-const Constants = require('./Constants');
+const { Constants } = require('shared');
 
 /**
  * A class to generate a "languages" file.

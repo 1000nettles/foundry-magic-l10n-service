@@ -35,7 +35,7 @@ module "lambda_function" {
     ROLE_ARN = aws_iam_role.lambda_exec.arn
   }
 
-  source_path = "../lambdas/Acceptor"
+  source_path = "../app/lambdas/Acceptor"
 
   tags = {
     Name = "foundry-magic-l18n"

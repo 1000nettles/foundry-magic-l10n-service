@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const Constants = require('./Constants');
+const { Constants } = require('shared');
 const { v4: uuidv4 } = require('uuid');
 
 /**

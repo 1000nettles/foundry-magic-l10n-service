@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
-const Constants = require('./Constants');
+const { Constants } = require('shared');
 
 module.exports = class DDBCoordinator {
 

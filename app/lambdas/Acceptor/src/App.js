@@ -6,7 +6,7 @@ const TranslationExtractor = require('./TranslationExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
 const ManifestValidator = require('./ManifestValidator');
 const Translator = require('./Translator');
-const Constants = require('./Constants');
+const { Constants } = require('shared');
 const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 
 /**

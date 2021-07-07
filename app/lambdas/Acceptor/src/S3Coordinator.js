@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const stream = require('stream');
 const crypto = require('crypto');
 const s3Zip = require('s3-zip');
-const Constants = require('./Constants');
+const { Constants } = require('shared');
 
 /**
  * A class to coordinate uploads and downloads to AWS S3.
