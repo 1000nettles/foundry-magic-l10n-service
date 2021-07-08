@@ -27,7 +27,8 @@ module.exports = class ManifestRetriever {
       throw new Error(`Could not retrieve manifest from "${manifestUrl}"`);
     }
 
-    const responseText = await response.text();
+    let responseText = await response.text();
+    responseText = responseText.trim();
 
     try {
       return JSON.parse(responseText);
