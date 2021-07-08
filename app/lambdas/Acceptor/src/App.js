@@ -2,12 +2,12 @@
 
 const DDBCoordinator = require('./DDBCoordinator');
 const S3Coordinator = require('./S3Coordinator');
-const TranslationExtractor = require('./TranslationExtractor');
+const LanguagesFileGenerator = require('./LanguagesFileGenerator');
+const LanguagesStringsExtractor = require('./LanguagesStringsExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
 const ManifestValidator = require('./ManifestValidator');
 const Translator = require('./Translator');
 const { Constants } = require('shared');
-const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 
 /**
  * A class to handle the orchestration of our localization.
@@ -27,8 +27,8 @@ module.exports = class App {
     let manifestUrl;
     let manifest;
     let packageFile;
-    let translations;
-    let toTranslateTo;
+    let languagesStrings;
+    let languagesToTranslateTo;
     let translateResult;
     let finalTranslations;
     let ddbRecords;
@@ -39,7 +39,7 @@ module.exports = class App {
     const manifestRetriever = new ManifestRetriever();
     const manifestValidator = new ManifestValidator();
     const ddbCoordinator = new DDBCoordinator();
-    const translationExtractor = new TranslationExtractor();
+    const languagesStringsExtractor = new LanguagesStringsExtractor();
     const languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Determine the manifest URL.
@@ -73,20 +73,20 @@ module.exports = class App {
       return this._failureResponse(`Could not retrieve package: ${e.message}`);
     }
 
-    // 5. Extract the translations from the package, depending on which ones
-    //    are listed in the manifest.
+    // 5. Extract the languages strings from the package, depending on which
+    //    ones are listed in the manifest.
     try {
-      translations = await translationExtractor
+      languagesStrings = await languagesStringsExtractor
         .extract(packageFile, manifest.languages);
     } catch (e) {
       return this._failureResponse(
-        `Could not extract translation files from module: ${e.message}`
+        `Could not extract languages strings from module: ${e.message}`
       );
     }
 
     // 6. Compare translations to the target translations we want.
     try {
-      toTranslateTo = this._getLanguagesToTranslateTo(translations);
+      languagesToTranslateTo = this._getLanguagesToTranslateTo(languagesStrings);
     } catch (e) {
       return this._failureResponse(e.message);
     }
@@ -94,8 +94,8 @@ module.exports = class App {
     // 7. Actually translate to the strings to the desired languages.
     try {
        translateResult = await translator.translate(
-        translations,
-        toTranslateTo,
+        languagesStrings,
+        languagesToTranslateTo,
         manifest.name,
       );
     } catch (e) {
@@ -181,17 +181,17 @@ module.exports = class App {
    * Given existing languages within the module, which ones are missing for
    * us to translate to?
    *
-   * @param {array} translations
-   *   An array of FoundryVTT translations.
+   * @param {array} languagesStrings
+   *   An array of languages strings.
    *
    * @return {array}
    *   The array of languages to translate to.
    *
    * @private
    */
-  _getLanguagesToTranslateTo(translations) {
-    const toTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
-      for (const translation of translations) {
+  _getLanguagesToTranslateTo(languagesStrings) {
+    const languagesToTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
+      for (const translation of languagesStrings) {
         if (target === translation.lang) {
           return false;
         }
@@ -200,11 +200,11 @@ module.exports = class App {
       return true;
     });
 
-    if (!toTranslateTo.length) {
-      throw new Error('Cannot find any target translations to translate to');
+    if (!languagesToTranslateTo.length) {
+      throw new Error('Cannot find any target languages to translate to');
     }
 
-    return toTranslateTo;
+    return languagesToTranslateTo;
   }
 
   _successResponse(jobsId) {

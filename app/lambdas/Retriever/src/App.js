@@ -32,6 +32,14 @@ module.exports = class App {
       return this._failureResponse(e.message);
     }
 
+    if (!masterJobsStatus) {
+      return this._successResponse(Number(masterJobsStatus));
+    }
+
+    // If we have a success status, this means we're ready to create the
+    // translation bundle.
+
+
     return this._successResponse(Number(masterJobsStatus));
   }
 

@@ -4,21 +4,21 @@ const AWS = require('aws-sdk');
 const unzipper = require('unzipper');
 
 /**
- * Extract the translations from the specified package.
+ * Extract the languages strings from the specified package.
  */
-module.exports = class TranslationExtractor {
+module.exports = class LanguagesStringExtractor {
 
   constructor() {
     this.bucketName = 'foundry-magic-l18n';
   }
 
   /**
-   * Extract the translation files contents.
+   * Extract the languages strings from the package zip file.
    *
    * @param {string} pathToPackageZip
    *   The full path to the package zip living on S3.
    * @param {array} languages
-   *   An array of language objects from the manifest.
+   *   An array of Foundry manfiest language objects.
    *
    * @return {Promise<*[]>}
    *   A promise containing the language file contents.
