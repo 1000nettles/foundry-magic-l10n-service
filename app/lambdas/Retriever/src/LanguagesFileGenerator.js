@@ -4,7 +4,7 @@ const { Constants } = require('shared');
  * A class to generate a "languages" file.
  *
  * This file includes the JSON block that a module / system author will replace
- * in their `module.json` manifest file.
+ * in their manifest file.
  */
 module.exports = class LanguagesFileGenerator {
 

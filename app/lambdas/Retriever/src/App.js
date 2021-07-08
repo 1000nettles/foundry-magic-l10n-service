@@ -49,7 +49,7 @@ module.exports = class App {
     console.log(manifest);
 
     // 3. Generate the languages JSON which the module author can place into
-    //    their module.json / manifest file later.
+    //    their manifest file later.
     const newLanguages = languagesFileGenerator.generate(
       manifest,
       translations

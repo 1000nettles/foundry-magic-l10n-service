@@ -7,7 +7,7 @@ const { Constants } = require('shared');
 /**
  * Extract the languages strings from the specified package.
  */
-module.exports = class LanguagesStringExtractor {
+module.exports = class LanguagesStringsExtractor {
 
   constructor() {
     this.s3 = new AWS.S3({
@@ -40,18 +40,32 @@ module.exports = class LanguagesStringExtractor {
         unzipper.Parse()
       ).on('entry', async (entry) => {
         // Determine if the current iterating file is one of the language
-        // files.
-        const language = languages.find(language => language.path === entry.path);
+        // files. Language files are placed in relation to where the module.json
+        // or system.json file is located, so to keep things simple let's ensure
+        // that the language path is CONTAINED within the full entry path. This
+        // saves us from needing to first locate where the module.json file is.
+        const language = languages.find(language => {
+          const sanitizedLangPath = language.path.replace('./', '');
+          return entry.path.includes(sanitizedLangPath);
+        });
+
         if (language === undefined) {
           entry.autodrain();
           return;
         }
 
         let content = await entry.buffer();
+        content = content.toString('utf-8').trim();
+
+        try {
+          content = JSON.parse(content);
+        } catch (e) {
+          throw new Error(`"${entry.path}" is not valid JSON`);
+        }
 
         translations.push({
           lang: language.lang,
-          content: JSON.parse(content.toString('utf-8')),
+          content,
         });
 
         entry.autodrain();

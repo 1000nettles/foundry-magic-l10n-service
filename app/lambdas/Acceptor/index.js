@@ -7,7 +7,7 @@ process.env.BUCKET = 'foundry-magic-l18n';
 // NOT the main entry point for the Lambda, see `main.js`.
 // This file exists for local testing purposes.
 main.handler({
-    queryStringParameters: { manifest_url: 'https://raw.githubusercontent.com/1000nettles/combat-numbers/main/module.json' }
+    queryStringParameters: { manifest_url: 'https://gitlab.com/Freeze020/pause-icon/-/raw/master/module.json' }
   },
   null,
   () => {}

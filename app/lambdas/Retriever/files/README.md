@@ -11,7 +11,7 @@ This download package includes a few things:
 
 Copy the generated translations files into the directory where your original translations files live in your system / module. More specifically, the directories listed in the `languages.json` file.
 
-Replace the `languages` property in your `module.json` with the content in the generated `languages.json` file. This references all the new translation files.
+Replace the `languages` property in your `module.json` / `system.json` with the content in the generated `languages.json` file. This references all the new translation files.
 
 Publish a new version of your system or module and you should be good to go!
 
