@@ -3,6 +3,7 @@
 const DDBCoordinator = require('./DDBCoordinator');
 const TranslateCoordinator = require('./TranslateCoordinator');
 const S3Coordinator = require('./S3Coordinator');
+const LanguagesFileGenerator = require("./LanguagesFileGenerator");
 
 module.exports = class App {
 
@@ -10,40 +11,79 @@ module.exports = class App {
     let ddbCoordinator;
     let s3Coordinator;
     let translateCoordinator;
-    let doJobsExist;
-    let masterJobsStatus;
-
-    ddbCoordinator = new DDBCoordinator();
-    s3Coordinator = new S3Coordinator();
-    translateCoordinator = new TranslateCoordinator(ddbCoordinator, s3Coordinator);
+    let languagesFileGenerator;
+    let translations;
+    let fileBundle;
+    let download;
 
     const masterJobsId = this._getMasterJobsId(event);
 
+    ddbCoordinator = new DDBCoordinator();
+    s3Coordinator = new S3Coordinator(masterJobsId);
+    translateCoordinator = new TranslateCoordinator(ddbCoordinator, s3Coordinator);
+    languagesFileGenerator = new LanguagesFileGenerator();
+
+    // 1. Get the actual translation strings and their string IDs from the stored
+    //    translation files. These have already been translated by AWS Translate.
     try {
-      doJobsExist = await translateCoordinator.doJobsExist(masterJobsId);
+      translations = await translateCoordinator.retrieveGeneratedTranslations(masterJobsId);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    if (!doJobsExist) {
-      return this._failureResponse(`No master jobs exists with ID ${masterJobsId}`);
+    if (!translations) {
+      return this._successResponse(Number(translations));
     }
 
+    // 2. Grab the master job from DDB and extract the stored FoundryVTT
+    //    manifest out of it.
+    const textTranslationJobs = await ddbCoordinator.getJobs(masterJobsId);
+    const manifest = textTranslationJobs?.Items[0]?.data?.Manifest;
+
+    console.log(manifest);
+
+    if (!manifest) {
+      return this._failureResponse(`Could not retrieve stored manifest for ${masterJobsId}`);
+    }
+
+    console.log(manifest);
+
+    // 3. Generate the languages JSON which the module author can place into
+    //    their module.json / manifest file later.
+    const newLanguages = languagesFileGenerator.generate(
+      manifest,
+      translations
+    );
+
+    console.log(newLanguages);
+
+    // 4. Save the actual translation files to S3, so they will (eventually)
+    //    be available to the module author.
     try {
-      masterJobsStatus = await translateCoordinator.retrieveGeneratedTranslations(masterJobsId);
+      fileBundle = await s3Coordinator.saveTranslationFiles(
+        translations,
+        newLanguages
+      );
     } catch (e) {
-      return this._failureResponse(e.message);
+      return this._failureResponse(
+        `Could not save new translation files: ${e.message}`
+      );
     }
 
-    if (!masterJobsStatus) {
-      return this._successResponse(Number(masterJobsStatus));
+    console.log(fileBundle);
+
+    // 5. Create a new zip file with the translated files for download.
+    try {
+      download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
+    } catch (e) {
+      return this._failureResponse(
+        `Could not create final zip download bundle: ${e.message}`
+      );
     }
 
-    // If we have a success status, this means we're ready to create the
-    // translation bundle.
+    console.log(download);
 
-
-    return this._successResponse(Number(masterJobsStatus));
+    return this._successResponse(download);
   }
 
   /**

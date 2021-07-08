@@ -2,7 +2,6 @@
 
 const AWS = require('aws-sdk');
 const { Constants } = require('shared');
-const { v4: uuidv4 } = require('uuid');
 
 /**
  * A class to execute the actual translation of strings.
@@ -15,11 +14,13 @@ module.exports = class Translator {
    * @param {DDBCoordinator} ddbCoordinator
    *   The injected DDBCoordinator instance.
    */
-  constructor(ddbCoordinator, s3Coordinator) {
+  constructor(ddbCoordinator, s3Coordinator, masterJobId) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
     this.ddbCoordinator = ddbCoordinator;
     this.s3Coordinator = s3Coordinator;
+
+    this.masterJobId = masterJobId;
   }
 
   /**
@@ -29,28 +30,27 @@ module.exports = class Translator {
    *   A list of Foundry translation contents.
    * @param {array} toTranslate
    *   A list of language codes to translate too.
-   * @param {string} moduleName
-   *   The name of the module we're translating for.
+   * @param {object} manifest
+   *   The full module manifest object.
    *
    * @return {Promise}
    *   A promise containing the result of the batch job execution. This is
    *   NOT the completion of the batch itself.
    */
-  async translate(translations, toTranslate, moduleName) {
+  async translate(translations, toTranslate, manifest) {
     const batchFileContent = await this._getBatchFileContent(translations);
     await this.s3Coordinator.saveBatchFile(batchFileContent);
 
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
-    const masterJobId = uuidv4();
     let ddbJobs = [];
 
     for (const target of toTranslate) {
       // We need our job name to be our ID so we can `list` later.
-      const jobName = masterJobId;
+      const jobName = this.masterJobId;
       const params = {
-        ClientToken: masterJobId,
+        ClientToken: this.masterJobId,
         DataAccessRoleArn: process.env.ROLE_ARN,
         InputDataConfig: {
           ContentType: 'text/html',
@@ -74,9 +74,7 @@ module.exports = class Translator {
       });
     }
 
-    await this.ddbCoordinator.saveTranslationJob(ddbJobs, masterJobId);
-
-    return masterJobId;
+    return this.ddbCoordinator.saveTranslationJob(ddbJobs, this.masterJobId, manifest);
   }
 
   /**

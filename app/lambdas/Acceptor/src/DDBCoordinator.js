@@ -82,10 +82,11 @@ module.exports = class DDBCoordinator {
    * @return {Promise<string>}
    *   The ID of the `TranslationJob` in UUIDv4 format.
    */
-  saveTranslationJob(jobs, masterJobId) {
+  saveTranslationJob(jobs, masterJobId, manifest) {
     const data = {
       ID: masterJobId,
       Jobs: jobs,
+      Manifest: manifest,
     };
 
     const params = {

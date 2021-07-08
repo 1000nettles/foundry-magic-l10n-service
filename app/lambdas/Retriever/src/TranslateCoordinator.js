@@ -17,6 +17,10 @@ module.exports = class TranslateCoordinator {
     this.listedTextTranslationJobs = null;
   }
 
+  async getTextTranslationJobs(masterJobsId) {
+    return this._getTextTranslationJobs(masterJobsId);
+  }
+
   async doJobsExist(masterJobsId) {
     const result = await this.ddbCoordinator.getJobs(masterJobsId);
     console.log(result.Items[0].data);
@@ -67,7 +71,7 @@ module.exports = class TranslateCoordinator {
         }
 
         // Finally, ensure our HTML entities are converted back to text.
-        sanitizedValue = he.decode(sanitizedValue);
+        sanitizedValue = he.decode(sanitizedValue).trim();
 
         finalGeneratedTranslations[languageTranslatedTo] = finalGeneratedTranslations[languageTranslatedTo] || {};
         finalGeneratedTranslations[languageTranslatedTo][stringId] = sanitizedValue;

@@ -1,11 +1,8 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const fs = require('fs');
 const fetch = require('node-fetch');
 const stream = require('stream');
-const crypto = require('crypto');
-const s3Zip = require('s3-zip');
 const { Constants } = require('shared');
 
 /**
@@ -14,16 +11,14 @@ const { Constants } = require('shared');
  */
  module.exports = class S3Coordinator {
 
-  constructor(packageName) {
+  constructor(masterJobsId) {
     this.s3 = new AWS.S3({
       region: Constants.AWS_REGION,
       apiVersion: Constants.AWS_S3_API_VERSION,
     });
 
-    this.packageId = `${packageName}-${crypto.randomBytes(8).toString('hex')}`;
-    this.packageFile = `packages_orig/${this.packageId}.zip`;
-    this.finalPackageFile = `downloads/${this.packageId}.zip`;
-    this.downloadsDir = 'downloads';
+    this.masterJobsId = masterJobsId;
+    this.packageFile = `packages_orig/${this.masterJobsId}.zip`;
   }
 
   /**
@@ -38,11 +33,11 @@ const { Constants } = require('shared');
   }
 
   getBatchFilesPackageInputDir() {
-    return `${Constants.BATCH_FILES_DIR}/${this.packageId}/input`;
+    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/input`;
   }
 
   getBatchFilesPackageOutputDir() {
-    return `${Constants.BATCH_FILES_DIR}/${this.packageId}/output`;
+    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/output`;
   }
 
    /**
@@ -66,92 +61,6 @@ const { Constants } = require('shared');
     };
 
     return this.s3.upload(params).promise();
-  }
-
-   /**
-    * Save the new translation files based on the provided translations.
-    *
-    * @param {object} translations
-    *   The translations, broken down by language code.
-    * @param {array} newLanguages
-    *   The languages objects to utilize.
-    *
-    * @return {Promise<object>}
-    *   Return a promise that once complete, specifies the files uploaded and
-    *   the directory they're stored in.
-    */
-  async saveTranslationFiles(translations, newLanguages) {
-    let files = [];
-    for (const entity of Object.entries(translations)) {
-      const [language, translated] = entity;
-      const buffer = Buffer.from(JSON.stringify(translated, null, 2));
-      const filePath = `translations/${language}.json`;
-      const params = {
-        Bucket: Constants.AWS_S3_BUCKET_NAME,
-        Key: `${this.downloadsDir}/${this.packageId}/${filePath}`,
-        Body: buffer,
-        ContentEncoding: 'base64',
-        ContentType: 'application/json',
-      };
-
-      await this.s3.upload(params).promise();
-      files.push(filePath);
-    }
-
-    // Upload new languages file.
-     const buffer = Buffer.from(JSON.stringify(newLanguages, null, 2));
-     const params = {
-       Bucket: Constants.AWS_S3_BUCKET_NAME,
-       Key: `${this.downloadsDir}/${this.packageId}/languages.json`,
-       Body: buffer,
-       ContentEncoding: 'base64',
-       ContentType: 'application/json',
-     };
-
-     await this.s3.upload(params).promise();
-     files.push(`languages.json`);
-
-    // Upload the files which are included in every compiled package.
-     const extraFiles = [
-       {
-         path: './files/LICENSE',
-         name: 'LICENSE',
-       },
-       {
-         path: './files/README.md',
-         name: 'README.md',
-       },
-     ]
-     for (const file of extraFiles) {
-       const fileContent = fs.readFileSync(file.path);
-       const params = {
-         Bucket: Constants.AWS_S3_BUCKET_NAME,
-         Key: `${this.downloadsDir}/${this.packageId}/${file.name}`,
-         Body: fileContent,
-       };
-       await this.s3.upload(params).promise();
-       files.push(file.name);
-     }
-
-    return {
-      directory: `${this.downloadsDir}/${this.packageId}`,
-      files,
-    };
-  }
-
-  async createZipFromTranslatedFiles(fileBundle) {
-    const { s3WriteStream, uploadPromise } = this._uploadStream({
-      Bucket: Constants.AWS_S3_BUCKET_NAME,
-      Key: this.finalPackageFile,
-    }, true);
-
-    await s3Zip
-      .archive({ region: Constants.AWS_REGION, bucket: Constants.AWS_S3_BUCKET_NAME, preserveFolderStructure: true }, fileBundle.directory, fileBundle.files)
-      .pipe(s3WriteStream);
-
-    const results = await uploadPromise;
-
-    return results.Location;
   }
 
   /**

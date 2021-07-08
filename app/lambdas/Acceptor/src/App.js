@@ -2,12 +2,12 @@
 
 const DDBCoordinator = require('./DDBCoordinator');
 const S3Coordinator = require('./S3Coordinator');
-const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 const LanguagesStringsExtractor = require('./LanguagesStringsExtractor');
 const ManifestRetriever = require('./ManifestRetriever');
 const ManifestValidator = require('./ManifestValidator');
 const Translator = require('./Translator');
 const { Constants } = require('shared');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * A class to handle the orchestration of our localization.
@@ -36,11 +36,12 @@ module.exports = class App {
     let download;
 
     // Initialize our dependencies.
+    const masterJobId = uuidv4();
+
     const manifestRetriever = new ManifestRetriever();
     const manifestValidator = new ManifestValidator();
     const ddbCoordinator = new DDBCoordinator();
     const languagesStringsExtractor = new LanguagesStringsExtractor();
-    const languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Determine the manifest URL.
     try {
@@ -64,8 +65,8 @@ module.exports = class App {
     }
 
     // 4. Get and store the package zip.
-    const s3Coordinator = new S3Coordinator(manifest.name);
-    const translator = new Translator(ddbCoordinator, s3Coordinator);
+    const s3Coordinator = new S3Coordinator(masterJobId, manifest.name);
+    const translator = new Translator(ddbCoordinator, s3Coordinator, masterJobId);
 
     try {
       packageFile = await s3Coordinator.retrievePackage(manifest.download);
@@ -93,10 +94,10 @@ module.exports = class App {
 
     // 7. Actually translate to the strings to the desired languages.
     try {
-       translateResult = await translator.translate(
+       await translator.translate(
         languagesStrings,
         languagesToTranslateTo,
-        manifest.name,
+        manifest,
       );
     } catch (e) {
       return this._failureResponse(
@@ -105,9 +106,8 @@ module.exports = class App {
     }
 
     // For now, return early to only test the batching functionality.
-
-    console.log(translateResult);
-    return this._successResponse(translateResult);
+    console.log(masterJobId);
+    return this._successResponse(masterJobId);
 
     finalTranslations = translateResult.finalTranslations;
     ddbRecords = translateResult.ddbRecords;
@@ -126,8 +126,9 @@ module.exports = class App {
     }*/
 
     // 9. Generate the new manifest with translation files.
-    const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
-    console.log(newLanguages);
+    // const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
+    // console.log(newLanguages);
+    let newLanguages;
 
     console.log('final translations');
     console.log(finalTranslations);
