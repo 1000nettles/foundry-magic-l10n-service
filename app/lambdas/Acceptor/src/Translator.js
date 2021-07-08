@@ -53,7 +53,7 @@ module.exports = class Translator {
         ClientToken: masterJobId,
         DataAccessRoleArn: process.env.ROLE_ARN,
         InputDataConfig: {
-          ContentType: 'text/plain',
+          ContentType: 'text/html',
           S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/`,
         },
         OutputDataConfig: {
@@ -101,7 +101,8 @@ module.exports = class Translator {
       const exists = false;
 
       if (!exists) {
-        batchContent += text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
+        batchContent += '<span translate="no">' + stringId + '</span>' +
+          text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
       }
     }
 

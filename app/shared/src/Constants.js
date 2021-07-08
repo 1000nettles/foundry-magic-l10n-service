@@ -70,12 +70,12 @@ module.exports = class Constants {
   }
 
   /**
-   * The filename of the "source batch" text file.
+   * The filename of the "source batch" HTML file.
    *
    * @return {string}
    */
   static get SOURCE_BATCH_FILENAME() {
-    return 'sourcebatch.txt';
+    return 'sourcebatch.html';
   }
 
   /**
@@ -103,7 +103,7 @@ module.exports = class Constants {
    * @return {string}
    */
   static get BATCH_NEWLINE_SEPARATOR() {
-    return '|||';
+    return '<span translate="no">SEPARATOR</span>';
   }
 
   /**

@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const he = require('he');
 const { Constants } = require('shared');
 
 module.exports = class TranslateCoordinator {
@@ -34,6 +35,8 @@ module.exports = class TranslateCoordinator {
     }
 
     const listedJobs = await this._getTextTranslationJobs(masterJobsId);
+    let finalGeneratedTranslations = [];
+
     for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
       const s3Key = jobProperties.OutputDataConfig.S3Uri
         .replace(`s3://${Constants.AWS_S3_BUCKET_NAME}/`, '');
@@ -43,10 +46,38 @@ module.exports = class TranslateCoordinator {
 
       const contentParts = fileContent.split(Constants.BATCH_NEWLINE_SEPARATOR);
       for (const contentPart of contentParts) {
-        const sanitizedValue = contentPart.trim();
-        console.log(sanitizedValue);
+        // Get the FoundryVTT translation string ID out of the HTML portion.
+        let stringId;
+        let sanitizedValue = contentPart.trim().replace(/<span translate="no">(.*?)<\/span>/g, (match, content) => {
+          if (typeof content === undefined) {
+            throw new Error(`Could not extract FoundryVTT string ID out of ${sanitizedValue}`);
+          }
+
+          stringId = content;
+
+          // Finally, strip the HTML out of the string to get the final
+          // translated value.
+          return '';
+        });
+
+        // The end of the file has extra content which doesn't convert properly.
+        // If we can't extract a string ID, it means we've hit it.
+        if (!stringId) {
+          continue;
+        }
+
+        // Finally, ensure our HTML entities are converted back to text.
+        sanitizedValue = he.decode(sanitizedValue);
+
+        finalGeneratedTranslations[languageTranslatedTo] = finalGeneratedTranslations[languageTranslatedTo] || {};
+        finalGeneratedTranslations[languageTranslatedTo][stringId] = sanitizedValue;
       }
+
+      console.log('final generated translations');
+      console.log(finalGeneratedTranslations);
     }
+
+    return finalGeneratedTranslations;
   }
 
   async _isMasterJobReady(masterJobsId) {

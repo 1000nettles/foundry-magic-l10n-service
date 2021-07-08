@@ -62,7 +62,7 @@ const { Constants } = require('shared');
       Key: filePath,
       Body: buffer,
       ContentEncoding: 'base64',
-      ContentType: 'text/plain',
+      ContentType: 'text/html',
     };
 
     return this.s3.upload(params).promise();

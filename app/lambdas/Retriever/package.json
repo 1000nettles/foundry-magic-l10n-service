@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
+    "he": "^1.2.0",
     "shared": "file:../../shared"
   },
   "devDependencies": {
