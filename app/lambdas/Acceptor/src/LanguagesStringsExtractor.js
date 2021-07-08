@@ -2,6 +2,7 @@
 
 const AWS = require('aws-sdk');
 const unzipper = require('unzipper');
+const { Constants } = require('shared');
 
 /**
  * Extract the languages strings from the specified package.
@@ -9,7 +10,10 @@ const unzipper = require('unzipper');
 module.exports = class LanguagesStringExtractor {
 
   constructor() {
-    this.bucketName = 'foundry-magic-l18n';
+    this.s3 = new AWS.S3({
+      region: Constants.AWS_REGION,
+      apiVersion: Constants.AWS_S3_API_VERSION,
+    });
   }
 
   /**
@@ -24,14 +28,13 @@ module.exports = class LanguagesStringExtractor {
    *   A promise containing the language file contents.
    */
   async extract(pathToPackageZip, languages) {
-    const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
     const translations = [];
 
     /**
      * Step 1: Get stream of the file to be extracted from the zip
      */
-    await s3
-      .getObject({ Bucket: this.bucketName, Key: pathToPackageZip })
+    await this.s3
+      .getObject({ Bucket: Constants.AWS_S3_BUCKET_NAME, Key: pathToPackageZip })
       .createReadStream()
       .pipe(
         unzipper.Parse()

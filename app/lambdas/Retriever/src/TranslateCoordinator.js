@@ -26,14 +26,22 @@ module.exports = class TranslateCoordinator {
     return true;
   }
 
-  async getMasterJobsStatus(jobsId) {
-    const listedJobs = await this._getTextTranslationJobs(jobsId);
-
-    console.log(listedJobs);
-
-    if (!listedJobs?.TextTranslationJobPropertiesList) {
-      throw new Error(`No translation jobs listed with ID ${jobsId} found`);
+  async retrieveGeneratedTranslations(masterJobsId) {
+    const isMasterJobReady = await this._isMasterJobReady(masterJobsId);
+    if (!isMasterJobReady) {
+      return null;
     }
+
+    return 1;
+
+    const listedJobs = await this._getTextTranslationJobs(masterJobsId);
+    for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
+
+    }
+  }
+
+  async _isMasterJobReady(masterJobsId) {
+    const listedJobs = await this._getTextTranslationJobs(masterJobsId);
 
     let allJobsComplete = true;
     for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
@@ -46,7 +54,7 @@ module.exports = class TranslateCoordinator {
     return allJobsComplete;
   }
 
-  async _getTextTranslationJobs(jobsId) {
+  async _getTextTranslationJobs(masterJobsId) {
     if (this.listedTextTranslationJobs) {
       return this.listedTextTranslationJobs;
     }
@@ -55,14 +63,25 @@ module.exports = class TranslateCoordinator {
     // use the `list` functionality.
     const params = {
       Filter: {
-        JobName: jobsId,
+        JobName: masterJobsId,
       },
     };
 
-    this.listedTextTranslationJobs = await this
+    const listedTextTranslationJobs = await this
       .awsTranslate
       .listTextTranslationJobs(params)
       .promise();
+
+    if (!listedTextTranslationJobs?.TextTranslationJobPropertiesList) {
+      throw new Error(`No translation jobs listed with ID ${masterJobsId} found`);
+    }
+
+    /*console.log(listedTextTranslationJobs);
+    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].JobDetails);
+    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].InputDataConfig);
+    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].OutputDataConfig);*/
+
+    this.listedTextTranslationJobs = listedTextTranslationJobs;
 
     return this.listedTextTranslationJobs;
   }

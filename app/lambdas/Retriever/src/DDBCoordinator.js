@@ -7,7 +7,7 @@ module.exports = class DDBCoordinator {
 
   constructor() {
     AWS.config.update({
-      region: 'us-east-1',
+      region: Constants.AWS_REGION,
     });
 
     this.docClient = new AWS.DynamoDB.DocumentClient();

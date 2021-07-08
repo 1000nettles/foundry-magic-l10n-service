@@ -23,11 +23,11 @@ module.exports = class App {
     }
 
     if (!doJobsExist) {
-      return this._failureResponse(`No jobs exist with ID ${masterJobsId}`);
+      return this._failureResponse(`No master jobs exists with ID ${masterJobsId}`);
     }
 
     try {
-      masterJobsStatus = await translateCoordinator.getMasterJobsStatus(masterJobsId);
+      masterJobsStatus = await translateCoordinator.retrieveGeneratedTranslations(masterJobsId);
     } catch (e) {
       return this._failureResponse(e.message);
     }
@@ -43,6 +43,17 @@ module.exports = class App {
     return this._successResponse(Number(masterJobsStatus));
   }
 
+  /**
+   * Get the master jobs ID from the Lambda event.
+   *
+   * @param {object} event
+   *   The event passed from the Lambda.
+   *
+   * @return {string}
+   *   The master jobs ID associated with all of the batch jobs.
+   *
+   * @private
+   */
   _getMasterJobsId(event) {
     const jobsId = event?.queryStringParameters?.jobs_id;
     if (!jobsId) {

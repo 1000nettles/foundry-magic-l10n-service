@@ -8,6 +8,24 @@ module.exports = class Constants {
     return 'en';
   }
 
+  static get AWS_REGION() {
+    return 'us-east-1';
+  }
+
+  static get AWS_S3_BUCKET_NAME() {
+    const bucketName =  process.env?.BUCKET;
+
+    if (!bucketName) {
+      throw new Error('Could not retrieve the AWS S3 bucket name from environment vars');
+    }
+
+    return bucketName;
+  }
+
+  static get AWS_S3_API_VERSION() {
+    return '2006-03-01';
+  }
+
   /**
    * The target languages that we should be generating translations for.
    *
