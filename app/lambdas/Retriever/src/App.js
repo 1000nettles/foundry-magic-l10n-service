@@ -2,17 +2,20 @@
 
 const DDBCoordinator = require('./DDBCoordinator');
 const TranslateCoordinator = require('./TranslateCoordinator');
+const S3Coordinator = require('./S3Coordinator');
 
 module.exports = class App {
 
   async execute(event) {
     let ddbCoordinator;
+    let s3Coordinator;
     let translateCoordinator;
     let doJobsExist;
     let masterJobsStatus;
 
     ddbCoordinator = new DDBCoordinator();
-    translateCoordinator = new TranslateCoordinator(ddbCoordinator);
+    s3Coordinator = new S3Coordinator();
+    translateCoordinator = new TranslateCoordinator(ddbCoordinator, s3Coordinator);
 
     const masterJobsId = this._getMasterJobsId(event);
 

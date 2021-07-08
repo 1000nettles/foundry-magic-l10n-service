@@ -5,10 +5,11 @@ const { Constants } = require('shared');
 
 module.exports = class TranslateCoordinator {
 
-  constructor(ddbCoordinator) {
+  constructor(ddbCoordinator, s3Coordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
     this.ddbCoordinator = ddbCoordinator;
+    this.s3Coordinator = s3Coordinator;
 
     // Provide mechanism for caching our response back from listing text
     // translation jobs.
@@ -32,11 +33,19 @@ module.exports = class TranslateCoordinator {
       return null;
     }
 
-    return 1;
-
     const listedJobs = await this._getTextTranslationJobs(masterJobsId);
     for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
+      const s3Key = jobProperties.OutputDataConfig.S3Uri
+        .replace(`s3://${Constants.AWS_S3_BUCKET_NAME}/`, '');
+      const languageTranslatedTo = jobProperties.TargetLanguageCodes[0];
+      const translatedFilePath = s3Key + languageTranslatedTo + '.' + Constants.SOURCE_BATCH_FILENAME;
+      const fileContent = await this.s3Coordinator.readFile(translatedFilePath);
 
+      const contentParts = fileContent.split(Constants.BATCH_NEWLINE_SEPARATOR);
+      for (const contentPart of contentParts) {
+        const sanitizedValue = contentPart.trim();
+        console.log(sanitizedValue);
+      }
     }
   }
 

@@ -15,4 +15,14 @@ module.exports = class S3Coordinator {
       apiVersion: '2006-03-01',
     });
   }
+
+  async readFile(filePath) {
+    const params = {
+      Bucket: Constants.AWS_S3_BUCKET_NAME,
+      Key: filePath,
+    };
+
+    const content = await this.s3.getObject(params).promise();
+    return content.Body.toString('utf-8');
+  }
 }
