@@ -34,22 +34,21 @@ module.exports = class Constants {
   static get TARGET_LANGUAGES() {
     return [
       { code: 'ar', name: 'Arabic' },
-      { code: 'ca', name: 'Catalan' },
-      /*{ code: 'zh', name: 'Chinese (Simplified)' },
-      { code: 'zh-TW', name: 'Chinese (Traditional)' },
-      { code: 'cs', name: 'Czech' },
+      { code: 'zh', name: 'Chinese (Simplified)' },
+      //{ code: 'zh-TW', name: 'Chinese (Traditional)' },
+      //{ code: 'cs', name: 'Czech' },
       { code: 'en', name: 'English' },
-      { code: 'fi', name: 'Finnish' },
+      //{ code: 'fi', name: 'Finnish' },
       { code: 'fr', name: 'French' },
       { code: 'de', name: 'German' },
       { code: 'it', name: 'Italian' },
       { code: 'ja', name: 'Japanese' },
       { code: 'ko', name: 'Korean' },
-      { code: 'pl', name: 'Polish' },
+      //{ code: 'pl', name: 'Polish' },
       { code: 'pt', name: 'Portuguese' },
       { code: 'ru', name: 'Russian' },
       { code: 'es', name: 'Spanish' },
-      { code: 'sv', name: 'Swedish' },*/
+      //{ code: 'sv', name: 'Swedish' },
     ];
   }
 
@@ -107,12 +106,14 @@ module.exports = class Constants {
   }
 
   /**
-   * The max number of translation batch jobs we can be running at a time.
+   * The max number of translation batch jobs threshold.
+   *
+   * Do not add more translation jobs if there is more jobs than this number.
    *
    * @return {number}
    */
-  static get MAX_RUNNING_TRANSLATIONS() {
-    return 4;
+  static get MAX_RUNNING_TRANSLATIONS_THRESHOLD() {
+    return 1;
   }
 
   /**

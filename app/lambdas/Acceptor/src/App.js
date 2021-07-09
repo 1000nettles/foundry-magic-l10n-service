@@ -43,7 +43,7 @@ module.exports = class App {
     // 1. Determine if other jobs are processing. If there's too many, reject
     //    the request for now.
     const runningTranslations = await translator.getRunningTranslations();
-    if (runningTranslations.length >= Constants.MAX_RUNNING_TRANSLATIONS) {
+    if (runningTranslations.length >= Constants.MAX_RUNNING_TRANSLATIONS_THRESHOLD) {
       console.log('Too many jobs processing, returning busy response...');
       return this._busyResponse();
     }
