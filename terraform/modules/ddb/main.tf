@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "instance" {
-  name = "FoundryMagicL18n"
+  name = "FoundryMagicL10n"
   billing_mode = "PAY_PER_REQUEST"
   hash_key = "pk"
   range_key = "sk"
@@ -14,12 +14,8 @@ resource "aws_dynamodb_table" "instance" {
     type = "S"
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   tags = {
-    Name = "ddb-foundry-magic-l18n"
+    Name = "ddb-foundry-magic-l10n"
     Environment = "staging"
   }
 }

@@ -93,7 +93,7 @@ module.exports = class Constants {
    * @return {string}
    */
   static get DDB_TABLE_NAME() {
-    return 'FoundryMagicL18n';
+    return 'FoundryMagicL10n';
   }
 
   /**

@@ -1,11 +1,6 @@
 resource "aws_s3_bucket" "instance" {
   bucket = var.bucket_name
 
-  # Prevent accidental deletion
-  lifecycle {
-    prevent_destroy = true
-  }
-
   versioning {
     enabled = false
   }
@@ -15,15 +10,9 @@ resource "aws_s3_bucket" "instance" {
     enabled = true
 
     expiration {
-      days = 1
+      days = 7
     }
   }
-}
-
-resource "aws_s3_bucket_object" "packages_orig_dir" {
-    bucket = var.bucket_name
-    key    = "packages_orig/"
-    source = "/dev/null"
 }
 
 resource "aws_iam_policy" "s3_access" {

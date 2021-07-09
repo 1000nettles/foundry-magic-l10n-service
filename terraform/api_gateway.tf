@@ -49,8 +49,8 @@ EOF
 }
 
 resource "aws_api_gateway_rest_api" "default" {
-  name = "Foundry Magic L18n API Gateway"
-  description = "The default Foundry Magic L18n API Gateway"
+  name = "Foundry Magic L10n API Gateway"
+  description = "The default Foundry Magic L10n API Gateway"
 
   endpoint_configuration {
     types = ["REGIONAL"]

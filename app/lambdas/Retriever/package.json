@@ -1,5 +1,5 @@
 {
-  "name": "foundry-magic-l18n-retriever",
+  "name": "foundry-magic-l10n-retriever",
   "private": true,
   "version": "0.1.0",
   "dependencies": {

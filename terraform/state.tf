@@ -1,16 +1,16 @@
 terraform {
   backend "s3" {
-    bucket = "1000nettles-foundry-magic-l18n-state"
+    bucket = "foundry-magic-l10n-state"
     key = "./terraform.tfstate"
     region = "us-east-1"
 
-    dynamodb_table = "1000nettles-foundry-magic-l18n-state"
+    dynamodb_table = "foundry-magic-l10n-state"
     encrypt = true
   }
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "1000nettles-foundry-magic-l18n-state"
+  bucket = "foundry-magic-l10n-state"
 
   # Prevent accidental deletion
   lifecycle {

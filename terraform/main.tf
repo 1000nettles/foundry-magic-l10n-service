@@ -21,7 +21,7 @@ module "ddb_instance" {
 module "lambda_function_acceptor" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = "foundry-magic-l18n-acceptor"
+  function_name = "foundry-magic-l10n-acceptor"
   description   = "A Lambda function to accept a manifest URL and generate translation batches"
   handler       = "main.handler"
   runtime       = "nodejs14.x"
@@ -38,14 +38,14 @@ module "lambda_function_acceptor" {
   source_path = "../app/lambdas/Acceptor"
 
   tags = {
-    Name = "foundry-magic-l18n"
+    Name = "foundry-magic-l10n"
   }
 }
 
 module "lambda_function_retriever" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = "foundry-magic-l18n-retriever"
+  function_name = "foundry-magic-l10n-retriever"
   description   = "A Lambda function to retrieve the translations, if completed"
   handler       = "main.handler"
   runtime       = "nodejs14.x"
@@ -62,14 +62,14 @@ module "lambda_function_retriever" {
   source_path = "../app/lambdas/Retriever"
 
   tags = {
-    Name = "foundry-magic-l18n"
+    Name = "foundry-magic-l10n"
   }
 }
 
  # IAM role which dictates what other AWS services the Lambda function
  # may access.
 resource "aws_iam_role" "lambda_exec" {
-  name = "foundry-magic-l18n-lambda-exec"
+  name = "foundry-magic-l10n-lambda-exec"
   assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
 }
 
@@ -178,4 +178,8 @@ resource "aws_lambda_permission" "apigw_permission_retriever" {
   # The "/*/*" portion grants access from any method on any resource
   # within the API Gateway REST API.
   source_arn = "${aws_api_gateway_rest_api.default.execution_arn}/*"
+}
+
+output "lambda_exec_role" {
+  value = aws_iam_role.lambda_exec.arn
 }
