@@ -6,30 +6,14 @@ const { Constants } = require('shared');
 
 module.exports = class TranslateCoordinator {
 
-  constructor(ddbCoordinator, s3Coordinator) {
+  constructor(s3Coordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
-    this.ddbCoordinator = ddbCoordinator;
     this.s3Coordinator = s3Coordinator;
 
     // Provide mechanism for caching our response back from listing text
     // translation jobs.
     this.listedTextTranslationJobs = null;
-  }
-
-  async getTextTranslationJobs(masterJobsId) {
-    return this._getTextTranslationJobs(masterJobsId);
-  }
-
-  async doJobsExist(masterJobsId) {
-    const result = await this.ddbCoordinator.getJobs(masterJobsId);
-    console.log(result.Items[0].data);
-
-    if (!result?.Items || !result.Items.length) {
-      return false;
-    }
-
-    return true;
   }
 
   async retrieveGeneratedTranslations(masterJobsId) {
@@ -119,11 +103,6 @@ module.exports = class TranslateCoordinator {
     if (!listedTextTranslationJobs?.TextTranslationJobPropertiesList) {
       throw new Error(`No translation jobs listed with ID ${masterJobsId} found`);
     }
-
-    /*console.log(listedTextTranslationJobs);
-    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].JobDetails);
-    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].InputDataConfig);
-    console.log(listedTextTranslationJobs.TextTranslationJobPropertiesList[0].OutputDataConfig);*/
 
     this.listedTextTranslationJobs = listedTextTranslationJobs;
 

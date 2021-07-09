@@ -114,4 +114,12 @@ module.exports = class Constants {
   static get AWS_TRANSLATE_BATCH_COMPLETE() {
     return 'COMPLETED';
   }
+
+  static get JOB_PROCESSING() {
+    return 'PROCESSING';
+  }
+
+  static get JOB_COMPLETE() {
+    return 'COMPLETE';
+  }
 }

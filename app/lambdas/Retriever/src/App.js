@@ -4,6 +4,7 @@ const DDBCoordinator = require('./DDBCoordinator');
 const TranslateCoordinator = require('./TranslateCoordinator');
 const S3Coordinator = require('./S3Coordinator');
 const LanguagesFileGenerator = require("./LanguagesFileGenerator");
+const { Constants } = require('shared');
 
 module.exports = class App {
 
@@ -20,7 +21,7 @@ module.exports = class App {
 
     ddbCoordinator = new DDBCoordinator();
     s3Coordinator = new S3Coordinator(masterJobsId);
-    translateCoordinator = new TranslateCoordinator(ddbCoordinator, s3Coordinator);
+    translateCoordinator = new TranslateCoordinator(s3Coordinator);
     languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Get the actual translation strings and their string IDs from the stored
@@ -32,7 +33,7 @@ module.exports = class App {
     }
 
     if (!translations) {
-      return this._successResponse(Number(translations));
+      return this._successResponse({ status: Constants.JOB_PROCESSING });
     }
 
     // 2. Grab the master job from DDB and extract the stored FoundryVTT
@@ -83,7 +84,7 @@ module.exports = class App {
 
     console.log(download);
 
-    return this._successResponse(download);
+    return this._successResponse({ status: Constants.JOB_COMPLETE, download });
   }
 
   /**
@@ -112,21 +113,19 @@ module.exports = class App {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        response,
-      }),
+      body: JSON.stringify(response),
     };
   }
 
-  _failureResponse(message) {
-    console.warn(message);
+  _failureResponse(response) {
+    console.warn(response);
 
     return {
       statusCode: 400,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
       },
-      body: message,
+      body: response,
     };
   }
 
