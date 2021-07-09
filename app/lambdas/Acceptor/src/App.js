@@ -145,7 +145,12 @@ module.exports = class App {
    * @private
    */
   _getLanguagesToTranslateTo(languagesStrings) {
-    const languagesToTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
+    // For now, just translate all languages except English.
+    return Constants.TARGET_LANGUAGE_CODES.filter(code => {
+      return code !== Constants.BASE_LANGUAGE_CODE;
+    });
+
+    /*const languagesToTranslateTo = Constants.TARGET_LANGUAGE_CODES.filter(target => {
       for (const translation of languagesStrings) {
         if (target === translation.lang) {
           return false;
@@ -159,7 +164,7 @@ module.exports = class App {
       throw new Error('Cannot find any target languages to translate to');
     }
 
-    return languagesToTranslateTo;
+    return languagesToTranslateTo;*/
   }
 
   _successResponse(jobsId) {
