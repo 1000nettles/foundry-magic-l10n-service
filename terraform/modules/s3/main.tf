@@ -4,15 +4,6 @@ resource "aws_s3_bucket" "instance" {
   versioning {
     enabled = false
   }
-
-  lifecycle_rule {
-    id      = "expire"
-    enabled = true
-
-    expiration {
-      days = 7
-    }
-  }
 }
 
 resource "aws_iam_policy" "s3_access" {
