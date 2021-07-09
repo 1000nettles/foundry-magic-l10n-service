@@ -41,7 +41,17 @@ module.exports = class App {
     const manifestRetriever = new ManifestRetriever();
     const manifestValidator = new ManifestValidator();
     const ddbCoordinator = new DDBCoordinator();
+    const s3Coordinator = new S3Coordinator(masterJobId);
+    const translator = new Translator(ddbCoordinator, s3Coordinator, masterJobId);
     const languagesStringsExtractor = new LanguagesStringsExtractor();
+
+    // 1. Determine if other jobs are processing. If there's too many, reject
+    //    the request for now.
+    const runningTranslations = await translator.getRunningTranslations();
+    if (runningTranslations.length >= Constants.MAX_RUNNING_TRANSLATIONS) {
+      console.log('Too many jobs processing, returning busy response...');
+      return this._busyResponse();
+    }
 
     // 1. Determine the manifest URL.
     try {
@@ -65,8 +75,6 @@ module.exports = class App {
     }
 
     // 4. Get and store the package zip.
-    const s3Coordinator = new S3Coordinator(masterJobId, manifest.name);
-    const translator = new Translator(ddbCoordinator, s3Coordinator, masterJobId);
 
     try {
       packageFile = await s3Coordinator.retrievePackage(manifest.download);
@@ -217,6 +225,16 @@ module.exports = class App {
       body: JSON.stringify({
         jobsId,
       }),
+    };
+  }
+
+  _busyResponse() {
+    return {
+      statusCode: 429,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: 'Too many jobs are processing right now, sorry!',
     };
   }
 

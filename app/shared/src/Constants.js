@@ -107,12 +107,30 @@ module.exports = class Constants {
   }
 
   /**
+   * The max number of translation batch jobs we can be running at a time.
+   *
+   * @return {number}
+   */
+  static get MAX_RUNNING_TRANSLATIONS() {
+    return 2;
+  }
+
+  /**
    * The value when a batch file has been completed for processing.
    *
    * @return {string}
    */
   static get AWS_TRANSLATE_BATCH_COMPLETE() {
     return 'COMPLETED';
+  }
+
+  /**
+   * The value when a batch file is still in progress.
+   *
+   * @return {string}
+   */
+  static get AWS_TRANSLATE_BATCH_IN_PROGRESS() {
+    return 'IN_PROGRESS';
   }
 
   static get JOB_PROCESSING() {

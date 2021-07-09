@@ -24,6 +24,30 @@ module.exports = class Translator {
   }
 
   /**
+   * Get the currently running batch translation jobs.
+   *
+   * @return {Promise<*[]|Translate.TextTranslationJobProperties[]|undefined>}
+   */
+  async getRunningTranslations() {
+    const params = {
+      Filter: {
+        JobStatus: Constants.AWS_TRANSLATE_BATCH_IN_PROGRESS,
+      },
+    };
+
+    const listedTextTranslationJobs = await this
+      .awsTranslate
+      .listTextTranslationJobs(params)
+      .promise();
+
+    if (!listedTextTranslationJobs?.TextTranslationJobPropertiesList) {
+      return [];
+    }
+
+    return listedTextTranslationJobs?.TextTranslationJobPropertiesList;
+  }
+
+  /**
    * Translate a list of Foundry translations to a list of target translations.
    *
    * @param {array} translations
