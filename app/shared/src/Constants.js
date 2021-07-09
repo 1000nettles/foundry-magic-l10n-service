@@ -112,7 +112,7 @@ module.exports = class Constants {
    * @return {number}
    */
   static get MAX_RUNNING_TRANSLATIONS() {
-    return 2;
+    return 4;
   }
 
   /**

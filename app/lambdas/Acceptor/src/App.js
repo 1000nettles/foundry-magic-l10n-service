@@ -29,11 +29,6 @@ module.exports = class App {
     let packageFile;
     let languagesStrings;
     let languagesToTranslateTo;
-    let translateResult;
-    let finalTranslations;
-    let ddbRecords;
-    let fileBundle;
-    let download;
 
     // Initialize our dependencies.
     const masterJobId = uuidv4();
@@ -53,36 +48,35 @@ module.exports = class App {
       return this._busyResponse();
     }
 
-    // 1. Determine the manifest URL.
+    // 2. Determine the manifest URL.
     try {
       manifestUrl = this._getManifestUrl(event);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    // 2. Get the full manifest JSON.
+    // 3. Get the full manifest JSON.
     try {
       manifest = await manifestRetriever.retrieve(manifestUrl);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    // 3. Ensure there's a valid `languages` section in the manifest.
+    // 4. Ensure there's a valid `languages` section in the manifest.
     try {
       manifestValidator.validate(manifest);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    // 4. Get and store the package zip.
-
+    // 5. Get and store the package zip.
     try {
       packageFile = await s3Coordinator.retrievePackage(manifest.download);
     } catch (e) {
       return this._failureResponse(`Could not retrieve package: ${e.message}`);
     }
 
-    // 5. Extract the languages strings from the package, depending on which
+    // 6. Extract the languages strings from the package, depending on which
     //    ones are listed in the manifest.
     try {
       languagesStrings = await languagesStringsExtractor
@@ -93,14 +87,14 @@ module.exports = class App {
       );
     }
 
-    // 6. Compare translations to the target translations we want.
+    // 7. Compare translations to the target translations we want.
     try {
       languagesToTranslateTo = this._getLanguagesToTranslateTo(languagesStrings);
     } catch (e) {
       return this._failureResponse(e.message);
     }
 
-    // 7. Actually translate to the strings to the desired languages.
+    // 8. Actually translate to the strings to the desired languages.
     try {
        await translator.translate(
         languagesStrings,
@@ -116,54 +110,6 @@ module.exports = class App {
     // For now, return early to only test the batching functionality.
     console.log(masterJobId);
     return this._successResponse(masterJobId);
-
-    finalTranslations = translateResult.finalTranslations;
-    ddbRecords = translateResult.ddbRecords;
-
-    // 8. It's a valid case that we may not have any records to actually save
-    // afterwards. This means that all translations are currently in DynamoDB.
-    // Disable so we can test batching...
-    /*if (ddbRecords.length) {
-      try {
-        await ddbCoordinator.save(ddbRecords);
-      } catch (e) {
-        return this._failureResponse(
-          `Could not save data into Translations: ${e.message}`
-        );
-      }
-    }*/
-
-    // 9. Generate the new manifest with translation files.
-    // const newLanguages = languagesFileGenerator.generate(manifest, finalTranslations);
-    // console.log(newLanguages);
-    let newLanguages;
-
-    console.log('final translations');
-    console.log(finalTranslations);
-    // 10. Save the new translation files to S3.
-    try {
-      fileBundle = await s3Coordinator.saveTranslationFiles(
-        finalTranslations,
-        newLanguages
-      );
-    } catch (e) {
-      return this._failureResponse(
-        `Could not save new translation files: ${e.message}`
-      );
-    }
-
-    // 11. Create a new zip file with the translated files for download.
-    try {
-      download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
-    } catch (e) {
-      return this._failureResponse(
-        `Could not create final zip download bundle: ${e.message}`
-      );
-    }
-
-    console.log(download);
-
-    return this._successResponse(download);
   }
 
   /**
