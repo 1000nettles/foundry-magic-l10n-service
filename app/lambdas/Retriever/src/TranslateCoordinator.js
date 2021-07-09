@@ -57,13 +57,20 @@ module.exports = class TranslateCoordinator {
         // Finally, ensure our HTML entities are converted back to text.
         sanitizedValue = he.decode(sanitizedValue).trim();
 
-        finalGeneratedTranslations[languageTranslatedTo] = finalGeneratedTranslations[languageTranslatedTo] || {};
-        finalGeneratedTranslations[languageTranslatedTo][stringId] = sanitizedValue;
-      }
+        // Ensure we're using the "Foundry code" for the translations.
+        const targetLanguage = Constants.TARGET_LANGUAGES.find(
+          targetLanguage => targetLanguage.code === languageTranslatedTo,
+        );
 
-      console.log('final generated translations');
-      console.log(finalGeneratedTranslations);
+        const languageTranslatedToFoundry = targetLanguage.foundryCode;
+
+        finalGeneratedTranslations[languageTranslatedToFoundry] = finalGeneratedTranslations[languageTranslatedToFoundry] || {};
+        finalGeneratedTranslations[languageTranslatedToFoundry][stringId] = sanitizedValue;
+      }
     }
+
+    console.log('Final generated translations:');
+    console.log(finalGeneratedTranslations);
 
     return finalGeneratedTranslations;
   }

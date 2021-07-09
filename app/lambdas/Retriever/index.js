@@ -7,7 +7,7 @@ process.env.BUCKET = 'foundry-magic-l10n';
 // NOT the main entry point for the Lambda, see `main.js`.
 // This file exists for local testing purposes.
 main.handler({
-    queryStringParameters: { jobs_id: 'ad7544bc-9cee-4537-8a99-320d6139da85' }
+    queryStringParameters: { jobs_id: '6c4764d9-c26e-4523-accb-565565606d70' }
   },
   null,
   () => {}

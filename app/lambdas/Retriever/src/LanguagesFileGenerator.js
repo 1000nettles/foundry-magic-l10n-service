@@ -36,13 +36,13 @@ module.exports = class LanguagesFileGenerator {
       }
 
       const targetLanguage = Constants.TARGET_LANGUAGES.find(
-        targetLanguage => targetLanguage.code === language,
+        targetLanguage => targetLanguage.foundryCode === language,
       );
 
       finalLanguages.push({
-        lang: targetLanguage.code,
+        lang: targetLanguage.foundryCode,
         name: targetLanguage.name,
-        path: `${baseLanguagePath}/${targetLanguage.code}.json`,
+        path: `${baseLanguagePath}/${targetLanguage.foundryCode}.json`,
       });
     }
 
