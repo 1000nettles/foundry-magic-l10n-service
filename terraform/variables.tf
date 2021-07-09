@@ -1,5 +1,5 @@
-variable "staging_stage_name" {
-  description = "The staging name of the API Gateway"
+variable "prod_stage_name" {
+  description = "The prod stage name of the API Gateway"
   type = string
-  default = "staging"
+  default = "prod"
 }

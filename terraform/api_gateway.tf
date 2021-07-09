@@ -116,7 +116,7 @@ resource "aws_api_gateway_stage" "stage" {
   deployment_id = aws_api_gateway_deployment.default.id
   rest_api_id = aws_api_gateway_rest_api.default.id
   depends_on = [aws_cloudwatch_log_group.default]
-  stage_name = var.staging_stage_name
+  stage_name = var.prod_stage_name
 }
 
 resource "aws_api_gateway_method_settings" "localize" {
@@ -144,7 +144,7 @@ resource "aws_api_gateway_method_settings" "retrieve" {
 }
 
 resource "aws_cloudwatch_log_group" "default" {
-  name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.default.id}/${var.staging_stage_name}"
+  name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.default.id}/${var.prod_stage_name}"
   retention_in_days = 7
 }
 
