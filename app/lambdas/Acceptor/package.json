@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
+    "flat": "^5.0.2",
     "node-fetch": "^2.6.1",
     "shared": "file:../../shared",
     "unzipper": "^0.10.11",

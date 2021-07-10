@@ -2,6 +2,7 @@
 
 const AWS = require('aws-sdk');
 const unzipper = require('unzipper');
+const flat = require('flat');
 const { Constants } = require('shared');
 
 /**
@@ -62,6 +63,10 @@ module.exports = class LanguagesStringsExtractor {
         } catch (e) {
           throw new Error(`"${entry.path}" is not valid JSON`);
         }
+
+        // Some language files use objects instead of a flattened structure.
+        // Let's ensure our translation files are fully flattened.
+        content = flat(content);
 
         translations.push({
           lang: language.lang,
