@@ -114,17 +114,32 @@ module.exports = class Translator {
    */
   async _getBatchFileContent(translations) {
     const baseTranslation = this._getBaseTranslation(translations);
-
+    const openingSpanTag = '<span translate="no">';
+    const closingSpanTag = '</span>';
     let batchContent = '';
+
     for (const [ stringId, text ] of Object.entries(baseTranslation.content)) {
       // Check first if we have the translation already stored.
       // If we have it stored, don't include it in our batch file.
       // const exists = await this.ddbCoordinator.exists(text);
       const exists = false;
 
+      // Ensure dynamically injected string vars (contained in { }) are not
+      // translated by AWS.
+      let finalText = text.replace(/{([^}]+)}/g, (match) => {
+        return openingSpanTag + match + closingSpanTag;
+      });
+
       if (!exists) {
-        batchContent += '<span translate="no">' + stringId + '</span>' +
-          text + "\n\n" + Constants.BATCH_NEWLINE_SEPARATOR + "\n\n";
+        batchContent += openingSpanTag
+          + stringId
+          + closingSpanTag
+          + '<p>'
+          + finalText
+          + '</p>'
+          + "\n\n"
+          + Constants.BATCH_NEWLINE_SEPARATOR
+          + "\n\n";
       }
     }
 

@@ -36,9 +36,12 @@ module.exports = class TranslateCoordinator {
       for (const contentPart of contentParts) {
         // Get the FoundryVTT translation string ID out of the HTML portion.
         let stringId;
-        let sanitizedValue = contentPart.trim().replace(/<span translate="no">(.*?)<\/span>/g, (match, content) => {
+
+        // Strip the `<span>` tags off of the string ID first and extract the
+        // rest of the content. Not a global replace.
+        let sanitizedValue = contentPart.trim().replace(/<span translate="no">(.*?)<\/span>/, (match, content) => {
           if (typeof content === undefined) {
-            throw new Error(`Could not extract FoundryVTT string ID out of ${sanitizedValue}`);
+            throw new Error(`Could not extract FoundryVTT string ID out of ${contentPart}`);
           }
 
           stringId = content;
@@ -53,6 +56,17 @@ module.exports = class TranslateCoordinator {
         if (!stringId) {
           continue;
         }
+
+        // Do another pass on the string to strip out any other surrounding
+        // `<span>` tags surrounding curly brackets or other content.
+        // A global replace.
+        sanitizedValue = sanitizedValue.replace(/<span translate="no">(.*?)<\/span>/g, (match, content) => {
+          return content;
+        }).trim();
+
+        // Remove the <p> tags from the string. These were necessary so AWS
+        // Translate saw distinct strings.
+        sanitizedValue = sanitizedValue.slice(3, sanitizedValue.length - 4);
 
         // Finally, ensure our HTML entities are converted back to text.
         sanitizedValue = he.decode(sanitizedValue).trim();

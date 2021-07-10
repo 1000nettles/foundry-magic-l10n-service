@@ -41,8 +41,6 @@ module.exports = class App {
     const textTranslationJobs = await ddbCoordinator.getJobs(masterJobsId);
     const manifest = textTranslationJobs?.Items[0]?.data?.Manifest;
 
-    console.log(manifest);
-
     if (!manifest) {
       return this._failureResponse(`Could not retrieve stored manifest for ${masterJobsId}`);
     }
