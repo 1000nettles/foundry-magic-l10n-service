@@ -14,6 +14,10 @@ resource "aws_dynamodb_table" "instance" {
     type = "S"
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = {
     Name = "ddb-foundry-magic-l10n"
     Environment = "staging"

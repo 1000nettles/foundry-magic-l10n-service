@@ -1,6 +1,10 @@
 resource "aws_s3_bucket" "instance" {
   bucket = var.bucket_name
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   versioning {
     enabled = false
   }
