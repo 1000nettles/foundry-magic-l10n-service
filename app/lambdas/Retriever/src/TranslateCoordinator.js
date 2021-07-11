@@ -1,11 +1,8 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const he = require('he');
 const { Constants } = require('shared');
 
 module.exports = class TranslateCoordinator {
-
   constructor(s3Coordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
@@ -23,13 +20,15 @@ module.exports = class TranslateCoordinator {
     }
 
     const listedJobs = await this._getTextTranslationJobs(masterJobsId);
-    let finalGeneratedTranslations = [];
+    const finalTranslations = [];
 
     for (const jobProperties of listedJobs?.TextTranslationJobPropertiesList) {
       const s3Key = jobProperties.OutputDataConfig.S3Uri
         .replace(`s3://${Constants.AWS_S3_BUCKET_NAME}/`, '');
       const languageTranslatedTo = jobProperties.TargetLanguageCodes[0];
-      const translatedFilePath = s3Key + languageTranslatedTo + '.' + Constants.SOURCE_BATCH_FILENAME;
+      const translatedFilePath = `${s3Key + languageTranslatedTo}.${Constants.SOURCE_BATCH_FILENAME}`;
+
+      /* eslint-disable no-await-in-loop */
       const fileContent = await this.s3Coordinator.readFile(translatedFilePath);
 
       const contentParts = fileContent.split(Constants.BATCH_NEWLINE_SEPARATOR);
@@ -40,7 +39,7 @@ module.exports = class TranslateCoordinator {
         // Strip the `<span>` tags off of the string ID first and extract the
         // rest of the content. Not a global replace.
         let sanitizedValue = contentPart.trim().replace(/<span translate="no">(.*?)<\/span>/, (match, content) => {
-          if (typeof content === undefined) {
+          if (typeof content === 'undefined') {
             throw new Error(`Could not extract FoundryVTT string ID out of ${contentPart}`);
           }
 
@@ -60,9 +59,7 @@ module.exports = class TranslateCoordinator {
         // Do another pass on the string to strip out any other surrounding
         // `<span>` tags surrounding curly brackets or other content.
         // A global replace.
-        sanitizedValue = sanitizedValue.replace(/<span translate="no">(.*?)<\/span>/g, (match, content) => {
-          return content;
-        }).trim();
+        sanitizedValue = sanitizedValue.replace(/<span translate="no">(.*?)<\/span>/g, (match, content) => content).trim();
 
         // Remove the <p> tags from the string. These were necessary so AWS
         // Translate saw distinct strings.
@@ -73,20 +70,21 @@ module.exports = class TranslateCoordinator {
 
         // Ensure we're using the "Foundry code" for the translations.
         const targetLanguage = Constants.TARGET_LANGUAGES.find(
-          targetLanguage => targetLanguage.code === languageTranslatedTo,
+          (foundLanguage) => foundLanguage.code === languageTranslatedTo,
         );
 
-        const languageTranslatedToFoundry = targetLanguage.foundryCode;
+        const foundryLanguageCode = targetLanguage.foundryCode;
 
-        finalGeneratedTranslations[languageTranslatedToFoundry] = finalGeneratedTranslations[languageTranslatedToFoundry] || {};
-        finalGeneratedTranslations[languageTranslatedToFoundry][stringId] = sanitizedValue;
+        finalTranslations[foundryLanguageCode] = finalTranslations[foundryLanguageCode]
+          || {};
+        finalTranslations[foundryLanguageCode][stringId] = sanitizedValue;
       }
     }
 
     console.log('Final generated translations:');
-    console.log(finalGeneratedTranslations);
+    console.log(finalTranslations);
 
-    return finalGeneratedTranslations;
+    return finalTranslations;
   }
 
   async _isMasterJobReady(masterJobsId) {
@@ -129,5 +127,4 @@ module.exports = class TranslateCoordinator {
 
     return this.listedTextTranslationJobs;
   }
-
-}
+};

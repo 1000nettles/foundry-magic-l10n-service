@@ -1,28 +1,21 @@
-'use strict';
-
+const { Constants } = require('shared');
 const DDBCoordinator = require('./DDBCoordinator');
 const TranslateCoordinator = require('./TranslateCoordinator');
 const S3Coordinator = require('./S3Coordinator');
-const LanguagesFileGenerator = require("./LanguagesFileGenerator");
-const { Constants } = require('shared');
+const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 
 module.exports = class App {
-
   async execute(event) {
-    let ddbCoordinator;
-    let s3Coordinator;
-    let translateCoordinator;
-    let languagesFileGenerator;
     let translations;
     let fileBundle;
     let download;
 
     const masterJobsId = this._getMasterJobsId(event);
 
-    ddbCoordinator = new DDBCoordinator();
-    s3Coordinator = new S3Coordinator(masterJobsId);
-    translateCoordinator = new TranslateCoordinator(s3Coordinator);
-    languagesFileGenerator = new LanguagesFileGenerator();
+    const ddbCoordinator = new DDBCoordinator();
+    const s3Coordinator = new S3Coordinator(masterJobsId);
+    const translateCoordinator = new TranslateCoordinator(s3Coordinator);
+    const languagesFileGenerator = new LanguagesFileGenerator();
 
     // 1. Get the actual translation strings and their string IDs from the stored
     //    translation files. These have already been translated by AWS Translate.
@@ -51,7 +44,7 @@ module.exports = class App {
     //    their manifest file later.
     const newLanguages = languagesFileGenerator.generate(
       manifest,
-      translations
+      translations,
     );
 
     console.log(newLanguages);
@@ -61,11 +54,11 @@ module.exports = class App {
     try {
       fileBundle = await s3Coordinator.saveTranslationFiles(
         translations,
-        newLanguages
+        newLanguages,
       );
     } catch (e) {
       return this._failureResponse(
-        `Could not save new translation files: ${e.message}`
+        `Could not save new translation files: ${e.message}`,
       );
     }
 
@@ -76,7 +69,7 @@ module.exports = class App {
       download = await s3Coordinator.createZipFromTranslatedFiles(fileBundle);
     } catch (e) {
       return this._failureResponse(
-        `Could not create final zip download bundle: ${e.message}`
+        `Could not create final zip download bundle: ${e.message}`,
       );
     }
 
@@ -126,5 +119,4 @@ module.exports = class App {
       body: response,
     };
   }
-
-}
+};

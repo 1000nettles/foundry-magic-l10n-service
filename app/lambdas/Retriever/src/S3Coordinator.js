@@ -1,5 +1,3 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const stream = require('stream');
@@ -11,7 +9,6 @@ const { Constants } = require('shared');
  * Also coordinates zipping and unzipping.
  */
 module.exports = class S3Coordinator {
-
   constructor(masterJobsId) {
     this.s3 = new AWS.S3({
       region: Constants.AWS_REGION,
@@ -46,7 +43,7 @@ module.exports = class S3Coordinator {
    *   the directory they're stored in.
    */
   async saveTranslationFiles(translations, newLanguages) {
-    let files = [];
+    const files = [];
     for (const entity of Object.entries(translations)) {
       const [language, translated] = entity;
       const buffer = Buffer.from(JSON.stringify(translated, null, 2));
@@ -59,6 +56,7 @@ module.exports = class S3Coordinator {
         ContentType: 'application/json',
       };
 
+      /* eslint-disable no-await-in-loop */
       await this.s3.upload(params).promise();
       files.push(filePath);
     }
@@ -74,7 +72,7 @@ module.exports = class S3Coordinator {
     };
 
     await this.s3.upload(params).promise();
-    files.push(`languages.json`);
+    files.push('languages.json');
 
     // Upload the files which are included in every compiled package.
     const extraFiles = [
@@ -86,15 +84,15 @@ module.exports = class S3Coordinator {
         path: './files/README.md',
         name: 'README.md',
       },
-    ]
+    ];
     for (const file of extraFiles) {
       const fileContent = fs.readFileSync(file.path);
-      const params = {
+      const extraFilesParams = {
         Bucket: Constants.AWS_S3_BUCKET_NAME,
         Key: `${this.downloadsDir}/${this.masterJobsId}/${file.name}`,
         Body: fileContent,
       };
-      await this.s3.upload(params).promise();
+      await this.s3.upload(extraFilesParams).promise();
       files.push(file.name);
     }
 
@@ -111,7 +109,11 @@ module.exports = class S3Coordinator {
     }, true);
 
     await s3Zip
-      .archive({ region: Constants.AWS_REGION, bucket: Constants.AWS_S3_BUCKET_NAME, preserveFolderStructure: true }, fileBundle.directory, fileBundle.files)
+      .archive({
+        region: Constants.AWS_REGION,
+        bucket: Constants.AWS_S3_BUCKET_NAME,
+        preserveFolderStructure: true,
+      }, fileBundle.directory, fileBundle.files)
       .pipe(s3WriteStream);
 
     const results = await uploadPromise;
@@ -143,4 +145,4 @@ module.exports = class S3Coordinator {
       uploadPromise,
     };
   }
-}
+};

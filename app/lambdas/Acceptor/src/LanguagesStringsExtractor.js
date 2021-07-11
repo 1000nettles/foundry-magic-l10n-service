@@ -1,5 +1,3 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const unzipper = require('unzipper');
 const flat = require('flat');
@@ -9,7 +7,6 @@ const { Constants } = require('shared');
  * Extract the languages strings from the specified package.
  */
 module.exports = class LanguagesStringsExtractor {
-
   constructor() {
     this.s3 = new AWS.S3({
       region: Constants.AWS_REGION,
@@ -38,15 +35,15 @@ module.exports = class LanguagesStringsExtractor {
       .getObject({ Bucket: Constants.AWS_S3_BUCKET_NAME, Key: pathToPackageZip })
       .createReadStream()
       .pipe(
-        unzipper.Parse()
+        unzipper.Parse(),
       ).on('entry', async (entry) => {
         // Determine if the current iterating file is one of the language
         // files. Language files are placed in relation to where the module.json
         // or system.json file is located, so to keep things simple let's ensure
         // that the language path is CONTAINED within the full entry path. This
         // saves us from needing to first locate where the module.json file is.
-        const language = languages.find(language => {
-          const sanitizedLangPath = language.path.replace('./', '');
+        const language = languages.find((foundLanguage) => {
+          const sanitizedLangPath = foundLanguage.path.replace('./', '');
           return entry.path.includes(sanitizedLangPath);
         });
 
@@ -79,5 +76,4 @@ module.exports = class LanguagesStringsExtractor {
 
     return translations;
   }
-
-}
+};

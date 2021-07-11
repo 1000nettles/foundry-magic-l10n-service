@@ -1,10 +1,7 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const { Constants } = require('shared');
 
 module.exports = class DDBCoordinator {
-
   constructor() {
     AWS.config.update({
       region: Constants.AWS_REGION,
@@ -29,5 +26,4 @@ module.exports = class DDBCoordinator {
 
     return this.docClient.query(params).promise();
   }
-
-}
+};

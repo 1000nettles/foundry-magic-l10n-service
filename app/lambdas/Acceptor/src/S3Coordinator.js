@@ -1,5 +1,3 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const fetch = require('node-fetch');
 const stream = require('stream');
@@ -9,8 +7,7 @@ const { Constants } = require('shared');
  * A class to coordinate uploads and downloads to AWS S3.
  * Also coordinates zipping and unzipping.
  */
- module.exports = class S3Coordinator {
-
+module.exports = class S3Coordinator {
   constructor(masterJobsId) {
     this.s3 = new AWS.S3({
       region: Constants.AWS_REGION,
@@ -40,7 +37,7 @@ const { Constants } = require('shared');
     return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/output`;
   }
 
-   /**
+  /**
     * Save the input batch file based on the content provided.
     *
     * @param {string} content
@@ -75,7 +72,7 @@ const { Constants } = require('shared');
   async _downloadAndSave(downloadUrl) {
     const response = await fetch(
       downloadUrl,
-      { method: 'GET', timeout: 5000, size: 8388608 }
+      { method: 'GET', timeout: 5000, size: 8388608 },
     );
 
     const { s3WriteStream, uploadPromise } = this._uploadStream({
@@ -112,5 +109,4 @@ const { Constants } = require('shared');
       uploadPromise,
     };
   }
-
 };

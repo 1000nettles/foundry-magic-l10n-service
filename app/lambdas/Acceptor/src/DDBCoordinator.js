@@ -1,10 +1,7 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const { Constants } = require('shared');
 
 module.exports = class DDBCoordinator {
-
   constructor() {
     AWS.config.update({
       region: Constants.AWS_REGION,
@@ -46,15 +43,16 @@ module.exports = class DDBCoordinator {
    * @param {array} ddbItems
    *   The DynamoDB items to save.
    *
-   * @return {Promise<void>}
+   * @return {Promise<unknown[]>}
    */
   async save(ddbItems) {
     const ddbItemsChunked = this._chunk(ddbItems);
 
     // Have to chunk our array as DynamoDB has batch processing limits.
+    const batchWritePromises = [];
     for (const ddbItemsChunk of ddbItemsChunked) {
       const params = {
-        RequestItems: {}
+        RequestItems: {},
       };
 
       params.RequestItems[Constants.DDB_TABLE_NAME] = [];
@@ -67,8 +65,12 @@ module.exports = class DDBCoordinator {
         });
       }
 
-      await this.docClient.batchWrite(params).promise();
+      batchWritePromises.push(
+        this.docClient.batchWrite(params).promise(),
+      );
     }
+
+    return Promise.all(batchWritePromises);
   }
 
   /**
@@ -113,15 +115,15 @@ module.exports = class DDBCoordinator {
   _chunk(array) {
     let i;
     let j;
-    let result = [];
-    let chunk = 25;
+    const result = [];
+    const chunk = 25;
 
     for (i = 0, j = array.length; i < j; i += chunk) {
       result.push(
-        array.slice(i, i + chunk)
+        array.slice(i, i + chunk),
       );
     }
 
     return result;
   }
-}
+};

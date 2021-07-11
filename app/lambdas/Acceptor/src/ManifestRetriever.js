@@ -1,5 +1,3 @@
-'use strict';
-
 const fetch = require('node-fetch');
 
 /**
@@ -15,12 +13,12 @@ module.exports = class ManifestRetriever {
    * @returns {JSON}
    *   The manifest file in JSON format.
    */
-   async retrieve(manifestUrl) {
+  async retrieve(manifestUrl) {
     const response = await fetch(
       manifestUrl,
-      { method: 'GET', timeout: 5000, size: 8388608 }
-    ).catch(err => {
-      throw new Error(`Could not retrieve manifest from "${manifestUrl}" - ${err.message}`)
+      { method: 'GET', timeout: 5000, size: 8388608 },
+    ).catch((err) => {
+      throw new Error(`Could not retrieve manifest from "${manifestUrl}" - ${err.message}`);
     });
 
     if (!response.ok) {
@@ -36,4 +34,4 @@ module.exports = class ManifestRetriever {
       throw new Error(`Provided manifest is not valid JSON: ${e.message}`);
     }
   }
-}
+};

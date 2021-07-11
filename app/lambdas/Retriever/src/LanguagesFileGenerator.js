@@ -7,7 +7,6 @@ const { Constants } = require('shared');
  * in their manifest file.
  */
 module.exports = class LanguagesFileGenerator {
-
   /**
    * Generate the languages JSON content to later be placed in a file.
    *
@@ -28,7 +27,7 @@ module.exports = class LanguagesFileGenerator {
     const finalLanguages = [languageTemplate];
 
     for (const entity of Object.entries(translations)) {
-      const [ language ] = entity;
+      const [language] = entity;
 
       // Don't re-add the base template.
       if (languageTemplate.code === language) {
@@ -36,7 +35,7 @@ module.exports = class LanguagesFileGenerator {
       }
 
       const targetLanguage = Constants.TARGET_LANGUAGES.find(
-        targetLanguage => targetLanguage.foundryCode === language,
+        (foundLanguage) => foundLanguage.foundryCode === language,
       );
 
       finalLanguages.push({
@@ -63,7 +62,7 @@ module.exports = class LanguagesFileGenerator {
    */
   _getLanguageTemplate(manifest) {
     const template = manifest.languages.find(
-      language => language.lang === Constants.BASE_LANGUAGE_CODE
+      (language) => language.lang === Constants.BASE_LANGUAGE_CODE,
     );
 
     if (!template) {
@@ -85,10 +84,9 @@ module.exports = class LanguagesFileGenerator {
    * @private
    */
   _getBaseLanguagePath(languageTemplate) {
-    let baseTranslationPath = languageTemplate.path.split('/');
+    const baseTranslationPath = languageTemplate.path.split('/');
     baseTranslationPath.pop();
 
     return baseTranslationPath.join('/');
   }
-
-}
+};

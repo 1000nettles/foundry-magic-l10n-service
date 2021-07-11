@@ -1,5 +1,3 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const { Constants } = require('shared');
 
@@ -7,7 +5,6 @@ const { Constants } = require('shared');
  * A class to execute the actual translation of strings.
  */
 module.exports = class Translator {
-
   /**
    * Translator constructor.
    *
@@ -68,7 +65,7 @@ module.exports = class Translator {
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
-    let ddbJobs = [];
+    const ddbJobs = [];
 
     for (const target of toTranslate) {
       // We need our job name to be our ID so we can `list` later.
@@ -88,6 +85,7 @@ module.exports = class Translator {
         JobName: jobName,
       };
 
+      /* eslint-disable no-await-in-loop */
       const batchResult = await this.awsTranslate.startTextTranslationJob(params).promise();
 
       ddbJobs.push({
@@ -118,7 +116,7 @@ module.exports = class Translator {
     const closingSpanTag = '</span>';
     let batchContent = '';
 
-    for (const [ stringId, text ] of Object.entries(baseTranslation.content)) {
+    for (const [stringId, text] of Object.entries(baseTranslation.content)) {
       // Check first if we have the translation already stored.
       // If we have it stored, don't include it in our batch file.
       // const exists = await this.ddbCoordinator.exists(text);
@@ -126,20 +124,18 @@ module.exports = class Translator {
 
       // Ensure dynamically injected string vars (contained in { }) are not
       // translated by AWS.
-      let finalText = text.replace(/{([^}]+)}/g, (match) => {
-        return openingSpanTag + match + closingSpanTag;
-      });
+      const finalText = text.replace(/{([^}]+)}/g, (match) => openingSpanTag + match + closingSpanTag);
 
       if (!exists) {
-        batchContent += openingSpanTag
+        batchContent += `${openingSpanTag
           + stringId
           + closingSpanTag
-          + '<p>'
-          + finalText
-          + '</p>'
-          + "\n\n"
-          + Constants.BATCH_NEWLINE_SEPARATOR
-          + "\n\n";
+        }<p>${
+          finalText
+        }</p>`
+          + `\n\n${
+            Constants.BATCH_NEWLINE_SEPARATOR
+          }\n\n`;
       }
     }
 
@@ -159,12 +155,12 @@ module.exports = class Translator {
    */
   _getBaseTranslation(translations) {
     const base = translations.find(
-      translation => translation.lang === Constants.BASE_LANGUAGE_CODE
+      (translation) => translation.lang === Constants.BASE_LANGUAGE_CODE,
     );
 
     if (!base) {
       throw new Error(
-        `Base language code ${Constants.BASE_LANGUAGE_CODE} could not be found in the translations list`
+        `Base language code ${Constants.BASE_LANGUAGE_CODE} could not be found in the translations list`,
       );
     }
 
@@ -191,20 +187,19 @@ module.exports = class Translator {
     const params = {
       SourceLanguageCode: source,
       TargetLanguageCode: target,
-      Text: text
+      Text: text,
     };
 
     await this.awsTranslate.translateText(params, (err, data) => {
       if (err) {
         throw new Error(
-          `Error translating "${params.Text}" to ${params.TargetLanguageCode}: ${err.code} - ${err.message}`
+          `Error translating "${params.Text}" to ${params.TargetLanguageCode}: ${err.code} - ${err.message}`,
         );
       }
 
-      finalTranslation = data['TranslatedText'];
+      finalTranslation = data.TranslatedText;
     }).promise();
 
     return finalTranslation;
   }
-
-}
+};
