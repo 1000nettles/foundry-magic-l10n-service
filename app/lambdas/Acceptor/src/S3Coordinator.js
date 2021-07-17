@@ -1,20 +1,42 @@
-const AWS = require('aws-sdk');
 const fetch = require('node-fetch');
-const stream = require('stream');
+const { S3 } = require('aws-sdk');
 const { Constants } = require('shared');
+const { PassThrough } = require('stream');
 
 /**
  * A class to coordinate uploads and downloads to AWS S3.
  * Also coordinates zipping and unzipping.
  */
 module.exports = class S3Coordinator {
+  /**
+   * Constructor for the S3Coordinator.
+   *
+   * @param {string} masterJobsId
+   *   The "master jobs" UUID associated with the job.
+   */
   constructor(masterJobsId) {
-    this.s3 = new AWS.S3({
+    /**
+     * Our AWS S3 instance.
+     *
+     * @type {import('aws-sdk').S3}
+     */
+    this.s3 = new S3({
       region: Constants.AWS_REGION,
       apiVersion: Constants.AWS_S3_API_VERSION,
     });
 
+    /**
+     * The "master jobs" UUID associated with the job.
+     *
+     * @type {string}
+     */
     this.masterJobsId = masterJobsId;
+
+    /**
+     * The full path to the original package file that we downloaded.
+     *
+     * @type {string}
+     */
     this.packageFile = `packages_orig/${this.masterJobsId}.zip`;
   }
 
@@ -27,14 +49,6 @@ module.exports = class S3Coordinator {
   async retrievePackage(downloadUrl) {
     await this._downloadAndSave(downloadUrl);
     return this.packageFile;
-  }
-
-  getBatchFilesPackageInputDir() {
-    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/input`;
-  }
-
-  getBatchFilesPackageOutputDir() {
-    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/output`;
   }
 
   /**
@@ -58,6 +72,24 @@ module.exports = class S3Coordinator {
     };
 
     return this.s3.upload(params).promise();
+  }
+
+  /**
+   * Get the batch files package input directory path.
+   *
+   * @return {string}
+   */
+  getBatchFilesPackageInputDir() {
+    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/input`;
+  }
+
+  /**
+   * Get the batch files package output directory path.
+   *
+   * @return {string}
+   */
+  getBatchFilesPackageOutputDir() {
+    return `${Constants.BATCH_FILES_DIR}/${this.masterJobsId}/output`;
   }
 
   /**
@@ -88,10 +120,20 @@ module.exports = class S3Coordinator {
   /**
    * Upload the currently running steam.
    *
-   * Solution found here: https://stackoverflow.com/a/50291380/823549
+   * @param {object} param  A param object container
+   * @param {string} param.Bucket  The S3 bucket name.
+   * @param {string} param.Key  The filename (including full S3 path.)
+   * @param {boolean} isPublic  If the file is to be public to the internet or not.
+   *
+   * @return {{uploadPromise: *, s3WriteStream: PassThrough}}
+   *   Both the S3 write stream and the upload promise from S3.
+   *
+   * @see https://stackoverflow.com/a/50291380/823549
+   *
+   * @private
    */
   _uploadStream({ Bucket, Key }, isPublic = false) {
-    const s3WriteStream = new stream.PassThrough();
+    const s3WriteStream = new PassThrough();
     const params = {
       Bucket,
       Key,

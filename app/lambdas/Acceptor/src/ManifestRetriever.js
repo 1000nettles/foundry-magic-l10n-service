@@ -10,8 +10,8 @@ module.exports = class ManifestRetriever {
    * @param {string} manifestUrl
    *   The URL to the FoundryVTT module / system manifest file.
    *
-   * @returns {JSON}
-   *   The manifest file in JSON format.
+   * @return {Promise<import('shared').FoundryManifest>}
+   *   The parsed manifest file.
    */
   async retrieve(manifestUrl) {
     const response = await fetch(

@@ -1,13 +1,21 @@
-const AWS = require('aws-sdk');
+const { config, DynamoDB } = require('aws-sdk');
 const { Constants } = require('shared');
 
+/**
+ * The DynamoDB coordinator.
+ */
 module.exports = class DDBCoordinator {
   constructor() {
-    AWS.config.update({
+    config.update({
       region: Constants.AWS_REGION,
     });
 
-    this.docClient = new AWS.DynamoDB.DocumentClient();
+    /**
+     * Our DocumentClient instance.
+     *
+     * @type {import('aws-sdk').DynamoDB.DocumentClient}
+     */
+    this.docClient = new DynamoDB.DocumentClient();
   }
 
   /**
@@ -16,8 +24,8 @@ module.exports = class DDBCoordinator {
    * @param {string} text
    *   The original, untranslated text to query for.
    *
-   * @return {Promise<object>}
-   *   A promise containing the record. Empty object if cannot be found.
+   * @return {Promise<boolean>}
+   *   A promise showing if the record exists or not.
    */
   async exists(text) {
     const params = {
@@ -81,8 +89,8 @@ module.exports = class DDBCoordinator {
    * @param {string} masterJobId
    *   The pre-generated UUID representing the master job for all translations.
    *
-   * @return {Promise<string>}
-   *   The ID of the `TranslationJob` in UUIDv4 format.
+   * @return {Promise<*>}
+   *   The result of the saving to DDB.
    */
   saveTranslationJob(jobs, masterJobId, manifest) {
     const data = {
@@ -110,6 +118,9 @@ module.exports = class DDBCoordinator {
    *   Array to be chunked.
    *
    * @see https://stackoverflow.com/a/8495740/823549
+   *
+   * @return {*[]}  The chunked results
+   *
    * @private
    */
   _chunk(array) {

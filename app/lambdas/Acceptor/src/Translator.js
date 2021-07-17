@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const { config, Translate } = require('aws-sdk');
 const { Constants } = require('shared');
 
 /**
@@ -8,12 +8,19 @@ module.exports = class Translator {
   /**
    * Translator constructor.
    *
-   * @param {DDBCoordinator} ddbCoordinator
-   *   The injected DDBCoordinator instance.
+   * @param {import("./DDBCoordinator")} ddbCoordinator
+   * @param {import("./S3Coordinator")} s3Coordinator
+   * @param {string} masterJobId A UUID representing the master job.
    */
   constructor(ddbCoordinator, s3Coordinator, masterJobId) {
-    AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
-    this.awsTranslate = new AWS.Translate();
+    config.update({ region: 'us-east-1', maxRetries: 5 });
+
+    /**
+     * Our AWS Translate instance.
+     *
+     * @type {import('aws-sdk').Translate}
+     */
+    this.awsTranslate = new Translate();
     this.ddbCoordinator = ddbCoordinator;
     this.s3Coordinator = s3Coordinator;
 
@@ -21,9 +28,8 @@ module.exports = class Translator {
   }
 
   /**
-   * Get the currently running batch translation jobs.
    *
-   * @return {Promise<*[]|Translate.TextTranslationJobProperties[]|undefined>}
+   * @return {Promise<Translate.TextTranslationJobProperties[]|*[]>}
    */
   async getRunningTranslations() {
     const params = {
@@ -47,9 +53,9 @@ module.exports = class Translator {
   /**
    * Translate a list of Foundry translations to a list of target translations.
    *
-   * @param {array} translations
+   * @param {import('./types/main').LanguagesStrings[]} languagesStrings
    *   A list of Foundry translation contents.
-   * @param {array} toTranslate
+   * @param {string[]} toTranslate
    *   A list of language codes to translate too.
    * @param {object} manifest
    *   The full module manifest object.
@@ -58,8 +64,8 @@ module.exports = class Translator {
    *   A promise containing the result of the batch job execution. This is
    *   NOT the completion of the batch itself.
    */
-  async translate(translations, toTranslate, manifest) {
-    const batchFileContent = await this._getBatchFileContent(translations);
+  async translate(languagesStrings, toTranslate, manifest) {
+    const batchFileContent = await this._getBatchFileContent(languagesStrings);
     await this.s3Coordinator.saveBatchFile(batchFileContent);
 
     // TODO: if all translations are already stored, exit here and return
@@ -102,16 +108,16 @@ module.exports = class Translator {
   /**
    * Hydrate the batch file content with source text for later processing.
    *
-   * @param {array} translations
-   *   An array of the source translation texts that we want to include.
+   * @param {import('./types/main').LanguagesStrings[]} languagesStrings
+   *   An array of the source languages strings that we want to include.
    *
    * @return {Promise<string>}
    *   The batch content in plain text as a string.
    *
    * @private
    */
-  async _getBatchFileContent(translations) {
-    const baseTranslation = this._getBaseTranslation(translations);
+  async _getBatchFileContent(languagesStrings) {
+    const baseTranslation = this._getBaseTranslation(languagesStrings);
     const openingSpanTag = '<span translate="no">';
     const closingSpanTag = '</span>';
     let batchContent = '';
@@ -169,6 +175,7 @@ module.exports = class Translator {
 
   /**
    * Get the AWS Translate result for our target text.
+   *
    * @param {string} source
    *   The source language code. (The language to translate FROM.)
    * @param {string} target

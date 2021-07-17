@@ -1,6 +1,6 @@
-const AWS = require('aws-sdk');
+const { S3 } = require('aws-sdk');
 const unzipper = require('unzipper');
-const flat = require('flat');
+const flatten = require('flat');
 const { Constants } = require('shared');
 
 /**
@@ -8,7 +8,12 @@ const { Constants } = require('shared');
  */
 module.exports = class LanguagesStringsExtractor {
   constructor() {
-    this.s3 = new AWS.S3({
+    /**
+     * Our AWS S3 instance.
+     *
+     * @type {import('aws-sdk').S3}
+     */
+    this.s3 = new S3({
       region: Constants.AWS_REGION,
       apiVersion: Constants.AWS_S3_API_VERSION,
     });
@@ -19,14 +24,19 @@ module.exports = class LanguagesStringsExtractor {
    *
    * @param {string} pathToPackageZip
    *   The full path to the package zip living on S3.
-   * @param {array} languages
-   *   An array of Foundry manfiest language objects.
+   * @param {import('shared').FoundryManifestLanguage[]} languages
+   *   An array of Foundry manifest language objects.
    *
-   * @return {Promise<*[]>}
+   * @return {Promise<import('./types/main').LanguagesStrings[]>}
    *   A promise containing the language file contents.
    */
   async extract(pathToPackageZip, languages) {
-    const translations = [];
+    /**
+     * Our final collected languages strings.
+     *
+     * @type {import('./types/main').LanguagesStrings[]}
+     */
+    const languagesStrings = [];
 
     /**
      * Step 1: Get stream of the file to be extracted from the zip
@@ -53,6 +63,7 @@ module.exports = class LanguagesStringsExtractor {
         }
 
         let content = await entry.buffer();
+
         content = content.toString('utf-8').trim();
 
         try {
@@ -63,9 +74,9 @@ module.exports = class LanguagesStringsExtractor {
 
         // Some language files use objects instead of a flattened structure.
         // Let's ensure our translation files are fully flattened.
-        content = flat(content);
+        content = flatten(content);
 
-        translations.push({
+        languagesStrings.push({
           lang: language.lang,
           content,
         });
@@ -74,6 +85,6 @@ module.exports = class LanguagesStringsExtractor {
       })
       .promise();
 
-    return translations;
+    return languagesStrings;
   }
 };

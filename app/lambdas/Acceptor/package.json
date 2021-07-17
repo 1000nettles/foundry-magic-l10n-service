@@ -2,7 +2,11 @@
   "name": "foundry-magic-l10n-acceptor",
   "private": true,
   "version": "0.1.0",
+  "scripts": {
+    "lint": "eslint \"./src/*\" --fix"
+  },
   "dependencies": {
+    "@types/node-fetch": "^2.5.11",
     "aws-sdk": "^2.932.0",
     "flat": "^5.0.2",
     "node-fetch": "^2.6.1",
@@ -11,6 +15,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.79",
     "eslint": "^7.30.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.23.4"

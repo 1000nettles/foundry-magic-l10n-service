@@ -17,7 +17,7 @@ module.exports = class App {
    * @param {object} event
    *   An event passed from the lambda.
    *
-   * @return {object}
+   * @return {Promise<{object}>}
    *   An HTTP response structured for the lambda.
    */
   async execute(event) {
@@ -133,7 +133,7 @@ module.exports = class App {
    * Given existing languages within the module, which ones are missing for
    * us to translate to?
    *
-   * @return {array}
+   * @return {string[]}
    *   The array of languages to translate to.
    *
    * @private

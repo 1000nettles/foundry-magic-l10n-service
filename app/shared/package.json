@@ -2,5 +2,8 @@
   "name": "shared",
   "version": "1.0.0",
   "description": "A library to share code between our Foundry Magic L10n Lambdas.",
-  "main": "index.js"
+  "main": "index.js",
+  "devDependencies": {
+    "@types/node": "^16.3.3"
+  }
 }
