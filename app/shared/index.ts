@@ -24,5 +24,10 @@ export type TargetLanguage = {
 export type ResponseObject = {
   statusCode: number;
   headers: object;
-  body: string;
+  body: string|object;
+}
+
+export type S3DirectoryAndFilesBundle = {
+  directory: string,
+  files: Array<string>,
 }

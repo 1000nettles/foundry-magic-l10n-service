@@ -10,11 +10,11 @@ module.exports = class LanguagesFileGenerator {
   /**
    * Generate the languages JSON content to later be placed in a file.
    *
-   * @param {object} manifest
+   * @param {import('shared').FoundryManifest} manifest
    *   The module / system manifest.
    * @param {object} translations
    * The generated translations.
-   * @return {array}
+   * @return {import('shared').FoundryManifestLanguage[]}
    *   An array of "language" objects in the format of the `language` property
    *   in FoundryVTT.
    */
@@ -30,7 +30,7 @@ module.exports = class LanguagesFileGenerator {
       const [language] = entity;
 
       // Don't re-add the base template.
-      if (languageTemplate.code === language) {
+      if (languageTemplate.lang === language) {
         continue;
       }
 
@@ -52,10 +52,10 @@ module.exports = class LanguagesFileGenerator {
    * Get the base template of how a "languages" entry looks like in the
    * author's module / system.
    *
-   * @param {object} manifest
+   * @param {import('shared').FoundryManifest} manifest
    *   The manifest object.
    *
-   * @return {object}
+   * @return {import('shared').FoundryManifestLanguage}
    *   The base language template.
    *
    * @private
@@ -75,7 +75,7 @@ module.exports = class LanguagesFileGenerator {
   /**
    * Get the base language path to compose other language file paths.
    *
-   * @param {object} languageTemplate
+   * @param {import('shared').FoundryManifestLanguage} languageTemplate  The language template.
    *   The base language template object.
    *
    * @return {string}

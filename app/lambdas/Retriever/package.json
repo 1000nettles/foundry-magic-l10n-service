@@ -2,6 +2,9 @@
   "name": "foundry-magic-l10n-retriever",
   "private": true,
   "version": "0.1.0",
+  "scripts": {
+    "lint": "eslint \"./src/*\" --fix"
+  },
   "dependencies": {
     "aws-sdk": "^2.932.0",
     "he": "^1.2.0",

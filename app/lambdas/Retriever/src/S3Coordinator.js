@@ -9,7 +9,17 @@ const { Constants } = require('shared');
  * Also coordinates zipping and unzipping.
  */
 module.exports = class S3Coordinator {
+  /**
+   * S3Coordinator constructor.
+   *
+   * @param {string} masterJobsId  The master jobs ID.
+   */
   constructor(masterJobsId) {
+    /**
+     * Our AWS S3 instance.
+     *
+     * @type {import('aws-sdk').S3}
+     */
     this.s3 = new AWS.S3({
       region: Constants.AWS_REGION,
       apiVersion: '2006-03-01',
@@ -20,6 +30,13 @@ module.exports = class S3Coordinator {
     this.finalPackageFile = `downloads/${this.masterJobsId}.zip`;
   }
 
+  /**
+   * Read the file.
+   *
+   * @param {string} filePath  The file path to read from.
+   *
+   * @returns {Promise<string>}  The file contents.
+   */
   async readFile(filePath) {
     const params = {
       Bucket: Constants.AWS_S3_BUCKET_NAME,
@@ -38,7 +55,7 @@ module.exports = class S3Coordinator {
    * @param {array} newLanguages
    *   The languages objects to utilize.
    *
-   * @return {Promise<object>}
+   * @return {Promise<import('shared').S3DirectoryAndFilesBundle>}
    *   Return a promise that once complete, specifies the files uploaded and
    *   the directory they're stored in.
    */
@@ -102,6 +119,13 @@ module.exports = class S3Coordinator {
     };
   }
 
+  /**
+   * Create a zip from the translated files.
+   *
+   * @param {import('shared').S3DirectoryAndFilesBundle} fileBundle
+   *
+   * @returns {Promise<string>}  The location of the zip.
+   */
   async createZipFromTranslatedFiles(fileBundle) {
     const { s3WriteStream, uploadPromise } = this._uploadStream({
       Bucket: Constants.AWS_S3_BUCKET_NAME,

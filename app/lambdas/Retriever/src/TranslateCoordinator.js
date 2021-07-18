@@ -2,7 +2,15 @@ const AWS = require('aws-sdk');
 const he = require('he');
 const { Constants } = require('shared');
 
+/**
+ * The TranslateCoordinator.
+ */
 module.exports = class TranslateCoordinator {
+  /**
+   * TranslateCoordinator constructor.
+   *
+   * @param {import('./S3Coordinator')} s3Coordinator
+   */
   constructor(s3Coordinator) {
     AWS.config.update({ region: 'us-east-1', maxRetries: 5 });
     this.awsTranslate = new AWS.Translate();
@@ -13,6 +21,12 @@ module.exports = class TranslateCoordinator {
     this.listedTextTranslationJobs = null;
   }
 
+  /**
+   * Retrieve the generated translations from master jobs ID.
+   *
+   * @param {string} masterJobsId  The master jobs ID.
+   * @returns {Promise<object>} The generated translations.
+   */
   async retrieveGeneratedTranslations(masterJobsId) {
     const isMasterJobReady = await this._isMasterJobReady(masterJobsId);
     if (!isMasterJobReady) {
@@ -87,6 +101,13 @@ module.exports = class TranslateCoordinator {
     return finalTranslations;
   }
 
+  /**
+   * Is the master job ready yet?
+   *
+   * @param {string} masterJobsId The master jobs ID.
+   *
+   * @returns {Promise<boolean>}
+   */
   async _isMasterJobReady(masterJobsId) {
     const listedJobs = await this._getTextTranslationJobs(masterJobsId);
 
@@ -101,6 +122,13 @@ module.exports = class TranslateCoordinator {
     return allJobsComplete;
   }
 
+  /**
+   * Get the text translation jobs from AWS Translate.
+   *
+   * @param {string} masterJobsId The master jobs ID.
+   *
+   * @returns {Promise<object>}
+   */
   async _getTextTranslationJobs(masterJobsId) {
     if (this.listedTextTranslationJobs) {
       return this.listedTextTranslationJobs;

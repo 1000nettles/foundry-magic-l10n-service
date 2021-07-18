@@ -5,6 +5,15 @@ const S3Coordinator = require('./S3Coordinator');
 const LanguagesFileGenerator = require('./LanguagesFileGenerator');
 
 module.exports = class App {
+  /**
+   * Execute the main functionality of the application.
+   *
+   * @param {object} event
+   *   An event passed from the lambda.
+   *
+   * @return {Promise<import('shared').ResponseObject>}
+   *   An HTTP response structured for the lambda.
+   */
   async execute(event) {
     let translations;
     let fileBundle;
@@ -98,6 +107,13 @@ module.exports = class App {
     return jobsId;
   }
 
+  /**
+   * A succes response.
+   *
+   * @param {object} response The success response.
+   *
+   * @returns {import('shared').ResponseObject}
+   */
   _successResponse(response) {
     return {
       statusCode: 200,
@@ -108,6 +124,13 @@ module.exports = class App {
     };
   }
 
+  /**
+   * A failure response.
+   *
+   * @param {string|object} response The response explaining the failure.
+   *
+   * @returns {import('shared').ResponseObject}
+   */
   _failureResponse(response) {
     console.warn(response);
 
