@@ -17,7 +17,7 @@ module.exports = class App {
    * @param {object} event
    *   An event passed from the lambda.
    *
-   * @return {Promise<{object}>}
+   * @return {Promise<import('shared').ResponseObject>}
    *   An HTTP response structured for the lambda.
    */
   async execute(event) {
@@ -143,6 +143,13 @@ module.exports = class App {
     return Constants.TARGET_LANGUAGE_CODES.filter((code) => code !== Constants.BASE_LANGUAGE_CODE);
   }
 
+  /**
+   * A succes response.
+   * 
+   * @param {string} jobsId The successful jobs ID.
+   *
+   * @returns {import('shared').ResponseObject}
+   */
   _successResponse(jobsId) {
     return {
       statusCode: 200,
@@ -155,6 +162,11 @@ module.exports = class App {
     };
   }
 
+  /**
+   * A busy response.
+   *
+   * @returns {import('shared').ResponseObject}
+   */
   _busyResponse() {
     return {
       statusCode: 429,
@@ -165,6 +177,13 @@ module.exports = class App {
     };
   }
 
+  /**
+   * A failure response.
+   *
+   * @param {string} message The message explaining the failure.
+   * 
+   * @returns {import('shared').ResponseObject}
+   */
   _failureResponse(message) {
     console.warn(message);
 

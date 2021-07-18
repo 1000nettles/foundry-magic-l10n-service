@@ -1,3 +1,5 @@
+import { NodeRuntime } from 'inspector';
+
 export * from './src/Constants';
 
 // Export all our types.
@@ -17,4 +19,10 @@ export type TargetLanguage = {
   code: string;
   foundryCode: string;
   name: string;
+}
+
+export type ResponseObject = {
+  statusCode: number;
+  headers: object;
+  body: string;
 }
