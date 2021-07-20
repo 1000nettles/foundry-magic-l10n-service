@@ -1,0 +1,16 @@
+{
+  "name": "generate-parallel-data",
+  "version": "1.0.0",
+  "description": "A utility for generating AWS Translate parallel data files.",
+  "bin": "./main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "1000nettles",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.1",
+    "commander": "^8.0.0",
+    "papaparse": "^5.3.1"
+  }
+}
