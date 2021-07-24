@@ -32,6 +32,7 @@ class Constants {
     static get TARGET_LANGUAGES() {
         return [
             { code: 'ar', foundryCode: 'ar', name: 'Arabic' },
+            { code: 'ca', foundryCode: 'ca', name: 'Català' },
             { code: 'zh', foundryCode: 'cn', name: '中文 (Chinese)' },
             { code: 'zh-TW', foundryCode: 'zh-tw', name: 'Chinese (Traditional)' },
             { code: 'cs', foundryCode: 'cs', name: 'Čeština' },
