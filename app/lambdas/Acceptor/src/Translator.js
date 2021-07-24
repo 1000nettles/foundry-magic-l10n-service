@@ -123,6 +123,17 @@ module.exports = class Translator {
     let batchContent = '';
 
     for (const [stringId, text] of Object.entries(baseTranslation.content)) {
+      // If the module developer has put in a blank string or object, just
+      // continue.
+      if (
+        !stringId
+        || typeof stringId !== 'string'
+        || !text
+        || typeof text !== 'string'
+      ) {
+        continue;
+      }
+
       // Check first if we have the translation already stored.
       // If we have it stored, don't include it in our batch file.
       // const exists = await this.ddbCoordinator.exists(text);
