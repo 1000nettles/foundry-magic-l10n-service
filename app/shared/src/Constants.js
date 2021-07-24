@@ -31,21 +31,22 @@ class Constants {
      */
     static get TARGET_LANGUAGES() {
         return [
-            { code: 'ar', foundryCode: 'ar', name: 'Arabic' },
-            { code: 'zh', foundryCode: 'cn', name: '中文 (Chinese)' },
+            // { code: 'ar', foundryCode: 'ar', name: 'Arabic' },
+            // { code: 'zh', foundryCode: 'cn', name: '中文 (Chinese)' },
             //{ code: 'zh-TW', name: 'Chinese (Traditional)' },
             //{ code: 'cs', name: 'Czech' },
             { code: 'en', foundryCode: 'en', name: 'English' },
             //{ code: 'fi', name: 'Finnish' },
             { code: 'fr', foundryCode: 'fr', name: 'Français' },
-            { code: 'de', foundryCode: 'de', name: 'Deutsch (German)' },
-            { code: 'it', foundryCode: 'it', name: 'Italian' },
+            // { code: 'de', foundryCode: 'de', name: 'Deutsch (German)' },
+            // { code: 'it', foundryCode: 'it', name: 'Italian' },
             { code: 'ja', foundryCode: 'ja', name: '日本語 (Japanese)' },
             { code: 'ko', foundryCode: 'ko', name: '한국어 (Korean)' },
             //{ code: 'pl', name: 'Polish' },
-            { code: 'pt', foundryCode: 'pt-BR', name: 'Português (Brasil)' },
-            { code: 'ru', foundryCode: 'ru', name: 'русский (Russian)' },
-            { code: 'es', foundryCode: 'es', name: 'Español' },
+            // { code: 'pt', foundryCode: 'pt-BR', name: 'Português (Brasil)' },
+            // { code: 'ru', foundryCode: 'ru', name: 'русский (Russian)' },
+            // { code: 'es', foundryCode: 'es', name: 'Español' },
+            { code: 'sv', foundryCode: 'sv', name: 'Swedish' },
         ];
     }
     /**
@@ -103,6 +104,9 @@ class Constants {
      */
     static get MAX_RUNNING_TRANSLATIONS_THRESHOLD() {
         return 1;
+    }
+    static get GENERATED_LANGUAGE_FILE_SUFFIX() {
+        return '-magicl10n';
     }
     /**
      * The value when a batch file has been completed for processing.

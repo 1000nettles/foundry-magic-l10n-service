@@ -1,4 +1,4 @@
 export type LanguagesStrings = {
   lang: string;
-  content: string;
+  content: object;
 }

@@ -56,13 +56,15 @@ module.exports = class S3Coordinator {
     *
     * @param {string} content
     *   The input batch file content.
+    * @param {string} targetLanguage
+    *   The target language code to use.
     *
     * @return {Promise<*>}
     *   The promise pertaining to uploading to S3.
     */
-  async saveBatchFile(content) {
+  async saveBatchFile(content, targetLanguage) {
     const buffer = Buffer.from(content);
-    const filePath = `${this.getBatchFilesPackageInputDir()}/${Constants.SOURCE_BATCH_FILENAME}`;
+    const filePath = `${this.getBatchFilesPackageInputDir()}/${targetLanguage}/${Constants.SOURCE_BATCH_FILENAME}`;
     const params = {
       Bucket: Constants.AWS_S3_BUCKET_NAME,
       Key: filePath,

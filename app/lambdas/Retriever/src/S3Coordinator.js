@@ -64,7 +64,7 @@ module.exports = class S3Coordinator {
     for (const entity of Object.entries(translations)) {
       const [language, translated] = entity;
       const buffer = Buffer.from(JSON.stringify(translated, null, 2));
-      const filePath = `translations/${language}.json`;
+      const filePath = this._getGeneratedFilePath(language);
       const params = {
         Bucket: Constants.AWS_S3_BUCKET_NAME,
         Key: `${this.downloadsDir}/${this.masterJobsId}/${filePath}`,
@@ -168,5 +168,15 @@ module.exports = class S3Coordinator {
       s3WriteStream,
       uploadPromise,
     };
+  }
+
+  /**
+   * Get the generated translation language full file path.
+   * 
+   * @param {string} language  The language code.
+   * @returns {string}
+   */
+  _getGeneratedFilePath(language) {
+    return `translations/${language}${Constants.GENERATED_LANGUAGE_FILE_SUFFIX}.json`;
   }
 };

@@ -65,15 +65,23 @@ module.exports = class Translator {
    *   NOT the completion of the batch itself.
    */
   async translate(languagesStrings, toTranslate, manifest) {
-    const batchFileContent = await this._getBatchFileContent(languagesStrings);
-    await this.s3Coordinator.saveBatchFile(batchFileContent);
-
     // TODO: if all translations are already stored, exit here and return
     // all the stored translations.
 
     const ddbJobs = [];
 
     for (const target of toTranslate) {
+      const batchFileContent = await this._getBatchFileContent(target, languagesStrings);
+
+      // If we have no content, do not create a translation file and start
+      // the translation job. This may mean that there already exists a
+      // translation file with all the applicable translations.
+      if (!batchFileContent) {
+        continue;
+      }
+
+      await this.s3Coordinator.saveBatchFile(batchFileContent, target);
+
       // We need our job name to be our ID so we can `list` later.
       const jobName = this.masterJobId;
       const params = {
@@ -81,10 +89,10 @@ module.exports = class Translator {
         DataAccessRoleArn: process.env.ROLE_ARN,
         InputDataConfig: {
           ContentType: 'text/html',
-          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/`,
+          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageInputDir()}/${target}/`,
         },
         OutputDataConfig: {
-          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageOutputDir()}/`,
+          S3Uri: `s3://${process.env.BUCKET}/${this.s3Coordinator.getBatchFilesPackageOutputDir()}/${target}`,
         },
         SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
         TargetLanguageCodes: [target],
@@ -108,6 +116,7 @@ module.exports = class Translator {
   /**
    * Hydrate the batch file content with source text for later processing.
    *
+   * @param {string} targetLanguage The target language code
    * @param {import('./types/main').LanguagesStrings[]} languagesStrings
    *   An array of the source languages strings that we want to include.
    *
@@ -116,19 +125,27 @@ module.exports = class Translator {
    *
    * @private
    */
-  async _getBatchFileContent(languagesStrings) {
-    const baseTranslation = this._getBaseTranslation(languagesStrings);
+  async _getBatchFileContent(targetLanguage, languagesStrings) {
+    const baseLanguagesStrings = this._getBaseLanguagesStrings(languagesStrings);
+
+    const languagesStringIdsToTranslate = this._getLanguagesStringIdsToTranslate(
+      targetLanguage,
+      languagesStrings,
+    );
+
     const openingSpanTag = '<span translate="no">';
     const closingSpanTag = '</span>';
     let batchContent = '';
 
-    for (const [stringId, text] of Object.entries(baseTranslation.content)) {
+    for (const stringId of languagesStringIdsToTranslate) {
+      // Don't translate a string that has already been translated by human
+      // translation.
+      const text = baseLanguagesStrings.content?.[stringId];
+
       // If the module developer has put in a blank string or object, just
       // continue.
       if (
-        !stringId
-        || typeof stringId !== 'string'
-        || !text
+        !text
         || typeof text !== 'string'
       ) {
         continue;
@@ -160,28 +177,59 @@ module.exports = class Translator {
   }
 
   /**
-   * Get the base level translation to translate from.
+   * Get the base level languages strings to translate from.
    *
-   * @param {array} translations
-   *   An array of translation objects.
+   * @param {import('./types/main').LanguagesStrings[]} languagesStrings
+   *   An array of languages strings objects.
    *
-   * @return {object}
-   *   The base translation object.
+   * @return {import('./types/main').LanguagesStrings}
    *
    * @private
    */
-  _getBaseTranslation(translations) {
-    const base = translations.find(
-      (translation) => translation.lang === Constants.BASE_LANGUAGE_CODE,
+  _getBaseLanguagesStrings(languagesStrings) {
+    const base = languagesStrings.find(
+      (currentLanguagesStrings) => currentLanguagesStrings.lang === Constants.BASE_LANGUAGE_CODE,
     );
 
     if (!base) {
       throw new Error(
-        `Base language code ${Constants.BASE_LANGUAGE_CODE} could not be found in the translations list`,
+        `Base language code ${Constants.BASE_LANGUAGE_CODE} could not be found in the languages strings list`,
       );
     }
 
     return base;
+  }
+
+  /**
+   * Get the languages string IDs to translate.
+   * 
+   * If there are existing translation files, it will ignore the existing
+   * translations / string IDs.
+   * 
+   * @param {string} targetLanguage The target language code
+   * @param {import('./types/main').LanguagesStrings[]} languagesStrings
+   *   An array of the source languages strings that we want to include.
+   *
+   * @returns {array}
+   * 
+   * @private
+   */
+  _getLanguagesStringIdsToTranslate(targetLanguage, languagesStrings) {
+    const baseLanguagesStrings = this._getBaseLanguagesStrings(languagesStrings);
+    const targetLanguagesStrings = languagesStrings.find(
+      (targetLanguagesStrings) => targetLanguagesStrings.lang === targetLanguage,
+    );
+    
+    if (targetLanguagesStrings) {
+      const targetLanguagesStringsKeys = Object.keys(targetLanguagesStrings.content);
+
+      // Get all the keys of string IDs we want to translate. AKA, any languages
+      // strings that do not exist in the existing target translation file.
+      return Object.keys(baseLanguagesStrings.content)
+        .filter(value => !targetLanguagesStringsKeys.includes(value));
+    }
+
+    return Object.keys(baseLanguagesStrings.content);
   }
 
   /**

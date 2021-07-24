@@ -22,9 +22,15 @@ module.exports = class LanguagesFileGenerator {
     const languageTemplate = this._getLanguageTemplate(manifest);
     const baseLanguagePath = this._getBaseLanguagePath(languageTemplate);
 
-    // Ensure to include our base level template back in the final languages
-    // output.
-    const finalLanguages = [languageTemplate];
+    // Start with the existing base languages, and then add our new translations
+    // AFTER.
+    // Also, only get "original" language files, not translated ones and we
+    // will be replacing those.
+    const finalLanguages = [].concat(
+      manifest.languages.filter(language => {
+        return language.path.includes(Constants.GENERATED_LANGUAGE_FILE_SUFFIX) === false;
+      })
+    );
 
     for (const entity of Object.entries(translations)) {
       const [language] = entity;
@@ -41,7 +47,7 @@ module.exports = class LanguagesFileGenerator {
       finalLanguages.push({
         lang: targetLanguage.foundryCode,
         name: targetLanguage.name,
-        path: `${baseLanguagePath}/${targetLanguage.foundryCode}.json`,
+        path: `${baseLanguagePath}/${targetLanguage.foundryCode}${Constants.GENERATED_LANGUAGE_FILE_SUFFIX}.json`,
       });
     }
 
