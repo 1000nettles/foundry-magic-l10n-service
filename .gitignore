@@ -37,3 +37,5 @@ terraform/builds
 node_modules/
 
 src/entry.js
+
+.DS_Store
