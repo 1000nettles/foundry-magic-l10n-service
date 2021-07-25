@@ -97,6 +97,7 @@ module.exports = class Translator {
         SourceLanguageCode: Constants.BASE_LANGUAGE_CODE,
         TargetLanguageCodes: [target],
         JobName: jobName,
+        ParallelDataNames: [`en_to_${target}`],
       };
 
       /* eslint-disable no-await-in-loop */
