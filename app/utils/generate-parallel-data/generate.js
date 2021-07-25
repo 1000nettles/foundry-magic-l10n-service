@@ -6,17 +6,40 @@ module.exports = async () => {
   let enTranslations;
   let targetTranslations;
 
+  /*{ code: 'ar', foundryCode: 'ar', name: 'Arabic' },
+  { code: 'ca', foundryCode: 'ca', name: 'Català' },
+  { code: 'zh', foundryCode: 'cn', name: '中文 (Chinese)' },
+  { code: 'zh-TW', foundryCode: 'zh-tw', name: 'Chinese (Traditional)' },
+  { code: 'cs', foundryCode: 'cs', name: 'Čeština' },
+  { code: 'en', foundryCode: 'en', name: 'English' },
+  // { code: 'fi', foundryCode: 'fi', name: 'Finnish' },
+  { code: 'fr', foundryCode: 'fr', name: 'Français' },
+  { code: 'de', foundryCode: 'de', name: 'Deutsch (German)' },
+  { code: 'it', foundryCode: 'it', name: 'Italian' },
+  { code: 'ja', foundryCode: 'ja', name: '日本語 (Japanese)' },
+  { code: 'ko', foundryCode: 'ko', name: '한국어 (Korean)' },
+  { code: 'pl', foundryCode: 'pl', name: 'Polski' },
+  { code: 'pt', foundryCode: 'pt-BR', name: 'Português (Brasil)' },
+  { code: 'ru', foundryCode: 'ru', name: 'русский (Russian)' },
+  { code: 'es', foundryCode: 'es', name: 'Español' },
+  { code: 'sv', foundryCode: 'sv', name: 'Swedish' },*/
+
   const targetLanguageCodes = [
     'ar',
+    'ca',
     'zh',
+    'zh-tw',
+    'cs',
     'fr',
     'de',
     'it',
     'ja',
     'ko',
+    'pl',
     'pt-BR',
     'ru',
     'es',
+    'sv',
   ];
 
   try {
